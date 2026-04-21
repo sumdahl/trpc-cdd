@@ -1,7 +1,7 @@
+import "./server/config/env";
 import { swaggerUI } from "@hono/swagger-ui";
 import { appRouter } from "./server";
-
-const PORT = 8000;
+import { env } from "./server/config/env";
 
 const openApiDoc = appRouter.getOpenAPIDocument({
   openapi: "3.0.0",
@@ -11,8 +11,8 @@ const openApiDoc = appRouter.getOpenAPIDocument({
   },
   servers: [
     {
-      url: "http://localhost:8000",
-      description: "dev-server",
+      url: `http://localhost:${env.PORT}`,
+      description: "Local development server",
     },
   ],
 });
@@ -23,6 +23,6 @@ appRouter.get("/openapi.json", (c) => c.json(openApiDoc));
 appRouter.get("/docs", swaggerUI({ url: "/openapi.json" }));
 
 export default {
-  port: PORT,
+  port: env.PORT,
   fetch: appRouter.fetch,
 };

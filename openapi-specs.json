@@ -7,7 +7,7 @@
   "servers": [
     {
       "url": "http://localhost:8000",
-      "description": "dev-server"
+      "description": "Local development server"
     }
   ],
   "components": {
@@ -35,30 +35,25 @@
                         "type": "object",
                         "properties": {
                           "id": {
-                            "type": "string",
-                            "description": "UUID of the todo"
+                            "type": "string"
                           },
                           "title": {
-                            "type": "string",
-                            "description": "Title of the todo"
+                            "type": "string"
                           },
                           "description": {
                             "type": "string",
-                            "nullable": true,
-                            "description": "Description of the todo"
+                            "nullable": true
                           },
                           "isCompleted": {
                             "type": "boolean",
-                            "default": false,
-                            "description": "Whether the todo is completed or not"
+                            "default": false
                           }
                         },
                         "required": [
                           "id",
                           "title"
                         ]
-                      },
-                      "description": "List of all todos"
+                      }
                     }
                   },
                   "required": [
@@ -82,10 +77,12 @@
                 "type": "object",
                 "properties": {
                   "title": {
-                    "type": "string"
+                    "type": "string",
+                    "minLength": 1
                   },
                   "description": {
-                    "type": "string"
+                    "type": "string",
+                    "minLength": 1
                   }
                 },
                 "required": [
@@ -108,22 +105,18 @@
                       "type": "object",
                       "properties": {
                         "id": {
-                          "type": "string",
-                          "description": "UUID of the todo"
+                          "type": "string"
                         },
                         "title": {
-                          "type": "string",
-                          "description": "Title of the todo"
+                          "type": "string"
                         },
                         "description": {
                           "type": "string",
-                          "nullable": true,
-                          "description": "Description of the todo"
+                          "nullable": true
                         },
                         "isCompleted": {
                           "type": "boolean",
-                          "default": false,
-                          "description": "Whether the todo is completed or not"
+                          "default": false
                         }
                       },
                       "required": [
