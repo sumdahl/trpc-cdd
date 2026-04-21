@@ -1,9 +1,6 @@
-import { router } from "./trpc";
+import { OpenAPIHono } from "@hono/zod-openapi";
 import { todoRouter } from "./routes/todos/todo.routes";
 
-//Root Router
-export const appRouter = router({
-  todos: todoRouter,
-});
+export const appRouter = new OpenAPIHono();
 
-export type AppRouter = typeof appRouter;
+appRouter.route("/todos", todoRouter);

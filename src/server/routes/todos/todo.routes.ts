@@ -1,6 +1,5 @@
-import { z } from "zod";
-import { router, publicProcedure } from "../../trpc";
-import { getAllTodosResponseModel, Todo, todoModel } from "./models";
+import { createRoute, OpenAPIHono, z } from "@hono/zod-openapi";
+import { getAllTodosResponseModel, todoModel, Todo } from "./models";
 
 const TODOS: Todo[] = [
   {
@@ -11,48 +10,60 @@ const TODOS: Todo[] = [
   },
 ];
 
-export const todoRouter = router({
-  getAllTodos: publicProcedure
-    .meta({
-      openapi: {
-        method: "GET",
-        path: "/todos",
-        tags: ["Todo"],
-        description: "Returns a list of all todos",
-      },
-    })
-    .input(z.undefined())
-    .output(getAllTodosResponseModel)
-    .query(() => {
-      return {
-        todos: TODOS,
-      };
-    }),
+export const todoRouter = new OpenAPIHono();
 
-  createTodo: publicProcedure
-    .meta({
-      openapi: {
-        method: "POST",
-        path: "/todos",
-        tags: ["Todo"],
-        description: "Creates a new todo",
+const getAllTodosRoute = createRoute({
+  method: "get",
+  path: "/",
+  tags: ["Todo"],
+  description: "Returns a list of all todos",
+  responses: {
+    200: {
+      content: { "application/json": { schema: getAllTodosResponseModel } },
+      description: "List of all todos",
+    },
+  },
+});
+
+const createTodoRoute = createRoute({
+  method: "post",
+  path: "/",
+  tags: ["Todo"],
+  description: "Creates a new todo",
+  request: {
+    body: {
+      content: {
+        "application/json": {
+          schema: z.object({
+            title: z.string(),
+            description: z.string(),
+          }),
+        },
       },
-    })
-    .input(
-      z.object({
-        title: z.string(),
-        description: z.string(),
-      }),
-    )
-    .output(z.object({ todo: todoModel }))
-    .mutation(({ input }) => {
-      const newTodo: Todo = {
-        id: (TODOS.length + 1).toString(),
-        title: input.title,
-        description: input.description,
-        isCompleted: false,
-      };
-      TODOS.push(newTodo);
-      return { todo: newTodo };
-    }),
+    },
+  },
+  responses: {
+    201: {
+      content: {
+        "application/json": { schema: z.object({ todo: todoModel }) },
+      },
+      description: "Created todo",
+    },
+  },
+});
+
+todoRouter.openapi(getAllTodosRoute, (c) => {
+  return c.json({ todos: TODOS });
+});
+
+todoRouter.openapi(createTodoRoute, (c) => {
+  const { title, description } = c.req.valid("json");
+  const newTodo: Todo = {
+    id: (TODOS.length + 1).toString(),
+    title,
+    description,
+    isCompleted: false,
+  };
+  TODOS.push(newTodo);
+  return c.json({ todo: newTodo }, 201);
 });
