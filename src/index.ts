@@ -9,6 +9,12 @@ const openApiDoc = appRouter.getOpenAPIDocument({
     title: "Contract-Driven API Development with Hono and OpenAPI",
     version: "1.0.0",
   },
+  servers: [
+    {
+      url: "http://localhost:8000",
+      description: "dev-server",
+    },
+  ],
 });
 
 await Bun.write("./openapi-specs.json", JSON.stringify(openApiDoc, null, 2));
