@@ -22,7 +22,7 @@ export class AppError extends Error {
   constructor(
     public readonly code: string,
     public readonly message: string,
-    public readonly statusCode: 400 | 404 | 422 | 500 = 400,
+    public readonly statusCode: 400 | 401 | 404 | 409 | 422 | 500 = 400,
   ) {
     super(message);
     this.name = "AppError";
