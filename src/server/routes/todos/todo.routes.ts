@@ -1,14 +1,6 @@
 import { createRoute, OpenAPIHono, z } from "@hono/zod-openapi";
-import { getAllTodosResponseModel, todoModel, Todo } from "./models";
-
-const TODOS: Todo[] = [
-  {
-    id: "1",
-    title: "Buy groceries",
-    description: "Milk, Bread and Egg",
-    isCompleted: false,
-  },
-];
+import { getAllTodosResponseModel, todoModel } from "./models";
+import { todoService } from "./todo.service";
 
 export const todoRouter = new OpenAPIHono();
 
@@ -53,17 +45,12 @@ const createTodoRoute = createRoute({
 });
 
 todoRouter.openapi(getAllTodosRoute, (c) => {
-  return c.json({ todos: TODOS });
+  const todos = todoService.getAllTodos();
+  return c.json({ todos });
 });
 
 todoRouter.openapi(createTodoRoute, (c) => {
-  const { title, description } = c.req.valid("json");
-  const newTodo: Todo = {
-    id: (TODOS.length + 1).toString(),
-    title,
-    description,
-    isCompleted: false,
-  };
-  TODOS.push(newTodo);
-  return c.json({ todo: newTodo }, 201);
+  const input = c.req.valid("json");
+  const todo = todoService.createTodo(input);
+  return c.json({ todo }, 201);
 });

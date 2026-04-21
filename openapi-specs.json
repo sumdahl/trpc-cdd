@@ -17,7 +17,9 @@
   "paths": {
     "/api/v1/todos": {
       "get": {
-        "tags": ["Todo"],
+        "tags": [
+          "Todo"
+        ],
         "description": "Returns a list of all todos",
         "responses": {
           "200": {
@@ -51,12 +53,17 @@
                             "description": "Whether the todo is completed or not"
                           }
                         },
-                        "required": ["id", "title"]
+                        "required": [
+                          "id",
+                          "title"
+                        ]
                       },
                       "description": "List of all todos"
                     }
                   },
-                  "required": ["todos"]
+                  "required": [
+                    "todos"
+                  ]
                 }
               }
             }
@@ -64,7 +71,9 @@
         }
       },
       "post": {
-        "tags": ["Todo"],
+        "tags": [
+          "Todo"
+        ],
         "description": "Creates a new todo",
         "requestBody": {
           "content": {
@@ -79,7 +88,10 @@
                     "type": "string"
                   }
                 },
-                "required": ["title", "description"]
+                "required": [
+                  "title",
+                  "description"
+                ]
               }
             }
           }
@@ -114,10 +126,15 @@
                           "description": "Whether the todo is completed or not"
                         }
                       },
-                      "required": ["id", "title"]
+                      "required": [
+                        "id",
+                        "title"
+                      ]
                     }
                   },
-                  "required": ["todo"]
+                  "required": [
+                    "todo"
+                  ]
                 }
               }
             }
