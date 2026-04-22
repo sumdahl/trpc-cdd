@@ -14,7 +14,10 @@ import {
   userResponseSchema,
 } from "./auth.schemas";
 import { authMiddleware } from "../middleware/auth.middleware";
-import { successResponseSchema } from "../response/response.schemas";
+import {
+  successResponseSchema,
+  errorResponseSchema,
+} from "../response/response.schemas";
 import { successHandler } from "../response/response.handler";
 import { createAppRouter } from "../shared/create-router";
 
@@ -46,6 +49,14 @@ export function createAuthRouter(
         },
         description: "User registered successfully",
       },
+      409: {
+        content: { "application/json": { schema: errorResponseSchema } },
+        description: "Email already in use",
+      },
+      422: {
+        content: { "application/json": { schema: errorResponseSchema } },
+        description: "Validation error",
+      },
     },
   });
 
@@ -65,6 +76,14 @@ export function createAuthRouter(
           },
         },
         description: "Login successful",
+      },
+      401: {
+        content: { "application/json": { schema: errorResponseSchema } },
+        description: "Invalid credentials",
+      },
+      422: {
+        content: { "application/json": { schema: errorResponseSchema } },
+        description: "Validation error",
       },
     },
   });
@@ -86,6 +105,14 @@ export function createAuthRouter(
         },
         description: "Token refreshed successfully",
       },
+      401: {
+        content: { "application/json": { schema: errorResponseSchema } },
+        description: "Invalid or expired refresh token",
+      },
+      422: {
+        content: { "application/json": { schema: errorResponseSchema } },
+        description: "Validation error",
+      },
     },
   });
 
@@ -106,6 +133,14 @@ export function createAuthRouter(
         },
         description: "Logged out successfully",
       },
+      401: {
+        content: { "application/json": { schema: errorResponseSchema } },
+        description: "Invalid or already-used refresh token",
+      },
+      422: {
+        content: { "application/json": { schema: errorResponseSchema } },
+        description: "Validation error",
+      },
     },
   });
 
@@ -125,6 +160,10 @@ export function createAuthRouter(
           },
         },
         description: "Current user",
+      },
+      401: {
+        content: { "application/json": { schema: errorResponseSchema } },
+        description: "Missing or invalid access token",
       },
     },
   });
