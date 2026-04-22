@@ -1,4 +1,4 @@
-import { createRoute, OpenAPIHono, z } from "@hono/zod-openapi";
+import { createRoute, z } from "@hono/zod-openapi";
 import { RegisterUseCase } from "../../../core/use-cases/auth/register";
 import { LoginUseCase } from "../../../core/use-cases/auth/login";
 import { RefreshUseCase } from "../../../core/use-cases/auth/refresh";
@@ -14,10 +14,9 @@ import {
   userResponseSchema,
 } from "./auth.schemas";
 import { authMiddleware } from "../middleware/auth.middleware";
-
 import { successResponseSchema } from "../response/response.schemas";
 import { successHandler } from "../response/response.handler";
-import { formatError } from "../response/response.formatter";
+import { createAppRouter } from "../shared/create-router";
 
 export function createAuthRouter(
   register: RegisterUseCase,
@@ -26,23 +25,8 @@ export function createAuthRouter(
   logout: LogoutUseCase,
   me: MeUseCase,
 ) {
-  const router = new OpenAPIHono({
-    defaultHook: (result, c) => {
-      if (!result.success) {
-        return c.json(
-          formatError(
-            "VALIDATION_ERROR",
-            "Invalid request data",
-            result.error.issues.map((i) => ({
-              path: i.path.join("."),
-              message: i.message,
-            })),
-          ),
-          422,
-        );
-      }
-    },
-  });
+  const router = createAppRouter();
+
   const registerRoute = createRoute({
     method: "post",
     path: "/register",
@@ -64,6 +48,7 @@ export function createAuthRouter(
       },
     },
   });
+
   const loginRoute = createRoute({
     method: "post",
     path: "/login",
@@ -83,6 +68,7 @@ export function createAuthRouter(
       },
     },
   });
+
   const refreshRoute = createRoute({
     method: "post",
     path: "/refresh",
@@ -102,6 +88,7 @@ export function createAuthRouter(
       },
     },
   });
+
   const logoutRoute = createRoute({
     method: "post",
     path: "/logout",
@@ -145,35 +132,30 @@ export function createAuthRouter(
   router.openapi(registerRoute, async (c) => {
     const input = c.req.valid("json");
     const user = await register.execute(input);
-
     return successHandler(c, { user }, "User registered successfully", 201);
   });
 
   router.openapi(loginRoute, async (c) => {
     const input = c.req.valid("json");
     const result = await login.execute(input);
-
     return successHandler(c, result, "Login successful");
   });
 
   router.openapi(refreshRoute, async (c) => {
     const { refreshToken } = c.req.valid("json");
     const result = await refresh.execute(refreshToken);
-
     return successHandler(c, result, "Token refreshed");
   });
 
   router.openapi(logoutRoute, async (c) => {
     const { refreshToken } = c.req.valid("json");
     await logout.execute(refreshToken);
-
     return successHandler(c, {}, "Logged out successfully");
   });
 
   router.openapi(meRoute, async (c) => {
     const userId = c.get("userId");
     const user = await me.execute(userId);
-
     return successHandler(c, { user });
   });
 
