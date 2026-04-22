@@ -24,8 +24,23 @@ apiRouter.use(
   }),
 );
 
-apiRouter.use("*", rateLimiter({ limit: 100, windowMs: 60_000 }));
-apiRouter.use("/auth/*", rateLimiter({ limit: 10, windowMs: 60_000 }));
+apiRouter.use(
+  "*",
+  rateLimiter({
+    limit: 100,
+    windowMs: 60_000,
+    keyPrefix: "global",
+  }),
+);
+
+apiRouter.use(
+  "/auth/*",
+  rateLimiter({
+    limit: 10,
+    windowMs: 60_000,
+    keyPrefix: "auth-routes",
+  }),
+);
 
 apiRouter.use("*", requestLogger);
 
