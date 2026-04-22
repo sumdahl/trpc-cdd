@@ -1,6 +1,7 @@
 import { createContainer, asClass, asValue, InjectionMode } from "awilix";
 import { db } from "../db";
 import { PostgresUserRepository } from "../persistence/user.pg.repository";
+import { PostgresTokenRepository } from "../persistence/token.pg.repository";
 import { PostgresTodoRepository } from "../persistence/todo.pg.repository";
 import { RegisterUseCase } from "../../core/use-cases/auth/register";
 import { LoginUseCase } from "../../core/use-cases/auth/login";
@@ -21,6 +22,7 @@ container.register({
 
   // Repositories
   userRepository: asClass(PostgresUserRepository).singleton(),
+  tokenRepository: asClass(PostgresTokenRepository).singleton(),
   todoRepository: asClass(PostgresTodoRepository).singleton(),
 
   // Auth use-cases

@@ -1,13 +1,17 @@
 import { IUserRepository } from "../../repositories/user.repository";
+import { ITokenRepository } from "../../repositories/token.repository";
 import { AppError, ErrorCode } from "../../errors";
 import { env } from "../../../config/env";
 import jwt from "jsonwebtoken";
 
 export class RefreshUseCase {
-  constructor(private readonly userRepository: IUserRepository) {}
+  constructor(
+    private readonly userRepository: IUserRepository,
+    private readonly tokenRepository: ITokenRepository,
+  ) {}
 
   async execute(token: string) {
-    const stored = await this.userRepository.findRefreshToken(token);
+    const stored = await this.tokenRepository.find(token);
     if (!stored) {
       throw new AppError(
         ErrorCode.INVALID_TOKEN,
@@ -17,25 +21,24 @@ export class RefreshUseCase {
     }
 
     if (stored.expiresAt < new Date()) {
-      await this.userRepository.deleteRefreshToken(token);
+      await this.tokenRepository.delete(token);
       throw new AppError(ErrorCode.TOKEN_EXPIRED, "Refresh token expired", 401);
     }
 
     try {
       jwt.verify(token, env.JWT_REFRESH_SECRET);
     } catch {
-      await this.userRepository.deleteRefreshToken(token);
+      await this.tokenRepository.delete(token);
       throw new AppError(ErrorCode.INVALID_TOKEN, "Invalid refresh token", 401);
     }
 
     const user = await this.userRepository.findById(stored.userId);
     if (!user) {
-      await this.userRepository.deleteRefreshToken(token);
+      await this.tokenRepository.delete(token);
       throw new AppError(ErrorCode.USER_NOT_FOUND, "User not found", 404);
     }
 
-    // rotation — delete old token, issue new one
-    await this.userRepository.deleteRefreshToken(token);
+    await this.tokenRepository.delete(token);
 
     const accessToken = jwt.sign(
       { sub: user.id, email: user.email },
@@ -50,11 +53,7 @@ export class RefreshUseCase {
     const expiresAt = new Date();
     expiresAt.setDate(expiresAt.getDate() + 7);
 
-    await this.userRepository.saveRefreshToken(
-      user.id,
-      newRefreshToken,
-      expiresAt,
-    );
+    await this.tokenRepository.save(user.id, newRefreshToken, expiresAt);
 
     return { accessToken, refreshToken: newRefreshToken };
   }
