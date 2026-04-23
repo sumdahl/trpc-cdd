@@ -22,9 +22,24 @@ export class InMemoryUserRepository implements IUserRepository {
       data.email,
       data.name,
       data.passwordHash,
+      false,
       new Date(),
     );
     this.users.push(user);
     return user;
+  }
+
+  async markAsVerified(userId: string): Promise<void> {
+    const index = this.users.findIndex((u) => u.id === userId);
+    if (index === -1) return;
+    const u = this.users[index];
+    this.users[index] = new UserEntity(
+      u.id,
+      u.email,
+      u.name,
+      u.passwordHash,
+      true,
+      u.createdAt,
+    );
   }
 }

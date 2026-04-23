@@ -1,30 +1,28 @@
-import { describe, it, expect, mock, beforeEach } from "bun:test";
+import { describe, it, expect, beforeEach } from "bun:test";
 import { RegisterUseCase } from "../../../../src/server/core/use-cases/auth/register";
-import { IUserRepository } from "../../../../src/server/core/repositories/user.repository";
-import { UserEntity } from "../../../../src/server/core/entities/user.entity";
+import { InMemoryUserRepository } from "../../../mocks/user.in-memory.repository";
+import { InMemoryVerificationTokenRepository } from "../../../mocks/verification-token.in-memory.repository";
+import { MockEmailService } from "../../../mocks/email.service.mock";
 import { AppError, ErrorCode } from "../../../../src/server/core/errors";
 
-const mockUser = new UserEntity(
-  "1",
-  "sumiran@example.com",
-  "Sumiran",
-  "hashedpassword",
-  new Date(),
-);
+let userRepository: InMemoryUserRepository;
+let verificationTokenRepository: InMemoryVerificationTokenRepository;
+let emailService: MockEmailService;
+let useCase: RegisterUseCase;
 
-const mockRepository: IUserRepository = {
-  findById: mock(async () => null),
-  findByEmail: mock(async () => null),
-  create: mock(async () => mockUser),
-  saveRefreshToken: mock(async () => {}),
-  findRefreshToken: mock(async () => null),
-  deleteRefreshToken: mock(async () => {}),
-  deleteAllRefreshTokens: mock(async () => {}),
-};
+beforeEach(() => {
+  userRepository = new InMemoryUserRepository();
+  verificationTokenRepository = new InMemoryVerificationTokenRepository();
+  emailService = new MockEmailService();
+  useCase = new RegisterUseCase(
+    userRepository,
+    verificationTokenRepository,
+    emailService,
+  );
+});
 
 describe("RegisterUseCase", () => {
   it("should register a new user", async () => {
-    const useCase = new RegisterUseCase(mockRepository);
     const result = await useCase.execute({
       email: "sumiran@example.com",
       name: "Sumiran",
@@ -36,12 +34,25 @@ describe("RegisterUseCase", () => {
     expect(result).not.toHaveProperty("passwordHash");
   });
 
+  it("should send a verification email after registration", async () => {
+    await useCase.execute({
+      email: "sumiran@example.com",
+      name: "Sumiran",
+      password: "password123",
+    });
+
+    const email = emailService.getLastVerificationEmail();
+    expect(email).not.toBeNull();
+    expect(email?.to).toBe("sumiran@example.com");
+    expect(email?.token).toBeTruthy();
+  });
+
   it("should throw EMAIL_TAKEN if email already exists", async () => {
-    const repo = {
-      ...mockRepository,
-      findByEmail: mock(async () => mockUser),
-    };
-    const useCase = new RegisterUseCase(repo);
+    await useCase.execute({
+      email: "sumiran@example.com",
+      name: "Sumiran",
+      password: "password123",
+    });
 
     expect(
       useCase.execute({

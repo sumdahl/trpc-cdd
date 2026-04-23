@@ -1,36 +1,31 @@
-import { describe, it, expect, mock } from "bun:test";
+import { describe, it, expect, mock, beforeEach } from "bun:test";
 import { LoginUseCase } from "../../../../src/server/core/use-cases/auth/login";
-import { IUserRepository } from "../../../../src/server/core/repositories/user.repository";
-import { ITokenRepository } from "../../../../src/server/core/repositories/token.repository";
-import { UserEntity } from "../../../../src/server/core/entities/user.entity";
-import { AppError } from "../../../../src/server/core/errors";
+import { InMemoryUserRepository } from "../../../mocks/user.in-memory.repository";
+import { InMemoryTokenRepository } from "../../../mocks/token.in-memory.repository";
+import { AppError, ErrorCode } from "../../../../src/server/core/errors";
 import bcrypt from "bcryptjs";
 
 const passwordHash = await bcrypt.hash("password123", 12);
-const mockUser = new UserEntity(
-  "1",
-  "sumiran@example.com",
-  "Sumiran",
-  passwordHash,
-  new Date(),
-);
 
-const mockUserRepository: IUserRepository = {
-  findById: mock(async () => null),
-  findByEmail: mock(async () => mockUser),
-  create: mock(async () => mockUser),
-};
+let userRepository: InMemoryUserRepository;
+let tokenRepository: InMemoryTokenRepository;
+let useCase: LoginUseCase;
 
-const mockTokenRepository: ITokenRepository = {
-  save: mock(async () => {}),
-  find: mock(async () => null),
-  delete: mock(async () => {}),
-  deleteAllForUser: mock(async () => {}),
-};
+beforeEach(() => {
+  userRepository = new InMemoryUserRepository();
+  tokenRepository = new InMemoryTokenRepository();
+  useCase = new LoginUseCase(userRepository, tokenRepository);
+});
 
 describe("LoginUseCase", () => {
-  it("should return tokens on valid credentials", async () => {
-    const useCase = new LoginUseCase(mockUserRepository, mockTokenRepository);
+  it("should return tokens on valid credentials for verified user", async () => {
+    const user = await userRepository.create({
+      email: "sumiran@example.com",
+      name: "Sumiran",
+      passwordHash,
+    });
+    await userRepository.markAsVerified(user.id);
+
     const result = await useCase.execute({
       email: "sumiran@example.com",
       password: "password123",
@@ -41,8 +36,28 @@ describe("LoginUseCase", () => {
     expect(result.user.email).toBe("sumiran@example.com");
   });
 
+  it("should throw EMAIL_NOT_VERIFIED for unverified user", async () => {
+    await userRepository.create({
+      email: "sumiran@example.com",
+      name: "Sumiran",
+      passwordHash,
+    });
+
+    const promise = useCase.execute({
+      email: "sumiran@example.com",
+      password: "password123",
+    });
+
+    expect(promise).rejects.toThrow(AppError);
+  });
+
   it("should throw INVALID_CREDENTIALS on wrong password", async () => {
-    const useCase = new LoginUseCase(mockUserRepository, mockTokenRepository);
+    const user = await userRepository.create({
+      email: "sumiran@example.com",
+      name: "Sumiran",
+      passwordHash,
+    });
+    await userRepository.markAsVerified(user.id);
 
     expect(
       useCase.execute({
@@ -53,12 +68,6 @@ describe("LoginUseCase", () => {
   });
 
   it("should throw INVALID_CREDENTIALS if user not found", async () => {
-    const userRepo = {
-      ...mockUserRepository,
-      findByEmail: mock(async () => null),
-    };
-    const useCase = new LoginUseCase(userRepo, mockTokenRepository);
-
     expect(
       useCase.execute({ email: "noone@example.com", password: "password123" }),
     ).rejects.toThrow(AppError);

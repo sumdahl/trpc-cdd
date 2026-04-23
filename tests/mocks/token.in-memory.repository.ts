@@ -12,9 +12,7 @@ export class InMemoryTokenRepository implements ITokenRepository {
     this.tokens.push({ id: crypto.randomUUID(), userId, token, expiresAt });
   }
 
-  async find(
-    token: string,
-  ): Promise<{ userId: string; expiresAt: Date } | null> {
+  async find(token: string): Promise<{ userId: string; expiresAt: Date } | null> {
     const found = this.tokens.find((t) => t.token === token);
     if (!found) return null;
     return { userId: found.userId, expiresAt: found.expiresAt };
