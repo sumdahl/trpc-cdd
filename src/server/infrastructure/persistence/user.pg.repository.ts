@@ -1,3 +1,4 @@
+import { logger } from "../logger";
 import { eq } from "drizzle-orm";
 import { DB } from "../db";
 import { users } from "./schema/user.schema";
@@ -27,7 +28,7 @@ export class PostgresUserRepository implements IUserRepository {
         row.createdAt,
       );
     } catch (err) {
-      console.error("[DB] findById failed:", err);
+      logger.error("[DB] findById failed:", err);
       throw new AppError(ErrorCode.DB_ERROR, "Failed to find user", 500);
     }
   }
@@ -48,7 +49,7 @@ export class PostgresUserRepository implements IUserRepository {
         row.createdAt,
       );
     } catch (err) {
-      console.error("[DB] findByEmail failed:", err);
+      logger.error("[DB] findByEmail failed:", err);
       throw new AppError(ErrorCode.DB_ERROR, "Failed to find user", 500);
     }
   }
@@ -72,7 +73,7 @@ export class PostgresUserRepository implements IUserRepository {
         row.createdAt,
       );
     } catch (err) {
-      console.error("[DB] create user failed:", err);
+      logger.error("[DB] create user failed:", err);
       if (isDbError(err) && err.code === PG_UNIQUE_VIOLATION) {
         throw new AppError(ErrorCode.EMAIL_TAKEN, "Email already in use", 409);
       }
@@ -87,7 +88,7 @@ export class PostgresUserRepository implements IUserRepository {
         .set({ isVerified: true })
         .where(eq(users.id, userId));
     } catch (err) {
-      console.error("[DB] markAsVerified failed:", err);
+      logger.error("[DB] markAsVerified failed:", err);
       throw new AppError(ErrorCode.DB_ERROR, "Failed to verify user", 500);
     }
   }
@@ -99,7 +100,7 @@ export class PostgresUserRepository implements IUserRepository {
         .set({ passwordHash })
         .where(eq(users.id, userId));
     } catch (err) {
-      console.error("[DB] updatePassword failed:", err);
+      logger.error("[DB] updatePassword failed:", err);
       throw new AppError(ErrorCode.DB_ERROR, "Failed to update password", 500);
     }
   }

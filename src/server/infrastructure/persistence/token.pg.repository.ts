@@ -1,3 +1,4 @@
+import { logger } from "../logger";
 import { eq } from "drizzle-orm";
 import { DB } from "../db";
 import { refreshTokens } from "./schema/user.schema";
@@ -16,7 +17,7 @@ export class PostgresTokenRepository implements ITokenRepository {
         expiresAt,
       });
     } catch (err) {
-      console.error("[DB] save token failed:", err);
+      logger.error("[DB] save token failed:", err);
       throw new AppError(
         ErrorCode.DB_ERROR,
         "Failed to save refresh token",
@@ -36,7 +37,7 @@ export class PostgresTokenRepository implements ITokenRepository {
       if (!row) return null;
       return { userId: row.userId, expiresAt: row.expiresAt };
     } catch (err) {
-      console.error("[DB] find token failed:", err);
+      logger.error("[DB] find token failed:", err);
       throw new AppError(
         ErrorCode.DB_ERROR,
         "Failed to find refresh token",
@@ -49,7 +50,7 @@ export class PostgresTokenRepository implements ITokenRepository {
     try {
       await this.db.delete(refreshTokens).where(eq(refreshTokens.token, token));
     } catch (err) {
-      console.error("[DB] delete token failed:", err);
+      logger.error("[DB] delete token failed:", err);
       throw new AppError(
         ErrorCode.DB_ERROR,
         "Failed to delete refresh token",
@@ -64,7 +65,7 @@ export class PostgresTokenRepository implements ITokenRepository {
         .delete(refreshTokens)
         .where(eq(refreshTokens.userId, userId));
     } catch (err) {
-      console.error("[DB] deleteAllForUser failed:", err);
+      logger.error("[DB] deleteAllForUser failed:", err);
       throw new AppError(
         ErrorCode.DB_ERROR,
         "Failed to delete refresh tokens",

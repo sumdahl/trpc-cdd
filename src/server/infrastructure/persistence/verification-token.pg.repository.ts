@@ -1,3 +1,4 @@
+import { logger } from "../logger";
 import { eq } from "drizzle-orm";
 import { DB } from "../db";
 import { verificationTokens } from "./schema/user.schema";
@@ -26,7 +27,7 @@ export class PostgresVerificationTokenRepository implements IVerificationTokenRe
         row.createdAt,
       );
     } catch (err) {
-      console.error("[DB] save verification token failed:", err);
+      logger.error("[DB] save verification token failed:", err);
       throw new AppError(
         ErrorCode.DB_ERROR,
         "Failed to save verification token",
@@ -50,7 +51,7 @@ export class PostgresVerificationTokenRepository implements IVerificationTokenRe
         row.createdAt,
       );
     } catch (err) {
-      console.error("[DB] find verification token failed:", err);
+      logger.error("[DB] find verification token failed:", err);
       throw new AppError(
         ErrorCode.DB_ERROR,
         "Failed to find verification token",
@@ -65,7 +66,7 @@ export class PostgresVerificationTokenRepository implements IVerificationTokenRe
         .delete(verificationTokens)
         .where(eq(verificationTokens.token, token));
     } catch (err) {
-      console.error("[DB] delete verification token failed:", err);
+      logger.error("[DB] delete verification token failed:", err);
       throw new AppError(
         ErrorCode.DB_ERROR,
         "Failed to delete verification token",
@@ -80,7 +81,7 @@ export class PostgresVerificationTokenRepository implements IVerificationTokenRe
         .delete(verificationTokens)
         .where(eq(verificationTokens.userId, userId));
     } catch (err) {
-      console.error("[DB] deleteAllForUser verification tokens failed:", err);
+      logger.error("[DB] deleteAllForUser verification tokens failed:", err);
       throw new AppError(
         ErrorCode.DB_ERROR,
         "Failed to delete verification tokens",

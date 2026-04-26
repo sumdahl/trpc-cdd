@@ -1,19 +1,34 @@
 import { Context } from "hono";
 import { AppError } from "../../../core/errors";
 import { formatError } from "../response/response.formatter";
+import { logger } from "../../logger";
 
 export const errorHandler = (err: Error, c: Context) => {
   const requestId = c.get("requestId") ?? "unknown";
-  console.error(
-    `[ERROR] [${requestId}] ${c.req.method} ${c.req.path}:`,
-    err.message,
-  );
+
+  const meta = {
+    requestId,
+    method: c.req.method,
+    path: c.req.path,
+    err: {
+      name: err.name,
+      message: err.message,
+      ...(err instanceof AppError && {
+        code: err.code,
+        statusCode: err.statusCode,
+      }),
+      stack: err.stack,
+    },
+  };
 
   if (err instanceof AppError) {
+    // expected domain error — warn level
+    logger.warn(meta, "domain error");
     return c.json(formatError(err.code, err.message), err.statusCode);
   }
 
   if (err.name === "ZodError") {
+    logger.warn({ ...meta, type: "validation" }, "validation error");
     try {
       const issues = JSON.parse(err.message);
       return c.json(
@@ -35,6 +50,8 @@ export const errorHandler = (err: Error, c: Context) => {
     }
   }
 
+  // unexpected error — error level
+  logger.error(meta, "unexpected error");
   return c.json(
     formatError("INTERNAL_SERVER_ERROR", "Something went wrong"),
     500,

@@ -1,3 +1,4 @@
+import { logger } from "../logger";
 import { Resend } from "resend";
 import { IEmailService } from "../../core/services/email.service";
 import { AppError, ErrorCode } from "../../core/errors";
@@ -27,7 +28,7 @@ export class ResendEmailService implements IEmailService {
     });
 
     if (error) {
-      console.error("[EMAIL] sendVerificationEmail failed:", error);
+      logger.error("[EMAIL] sendVerificationEmail failed:", error);
       throw new AppError(
         ErrorCode.EMAIL_SEND_FAILED,
         "Failed to send verification email",
@@ -51,7 +52,7 @@ export class ResendEmailService implements IEmailService {
     });
 
     if (error) {
-      console.error("[EMAIL] sendPasswordResetEmail failed:", error);
+      logger.error("[EMAIL] sendPasswordResetEmail failed:", error);
       throw new AppError(
         ErrorCode.EMAIL_SEND_FAILED,
         "Failed to send password reset email",
