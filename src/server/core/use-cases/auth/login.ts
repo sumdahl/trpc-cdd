@@ -1,5 +1,6 @@
 import { IUserRepository } from "../../repositories/user.repository";
 import { ITokenRepository } from "../../repositories/token.repository";
+import { IRoleRepository } from "../../repositories/role.repository";
 import { AppError, ErrorCode } from "../../errors";
 import { env } from "../../../config/env";
 import bcrypt from "bcryptjs";
@@ -9,6 +10,7 @@ export class LoginUseCase {
   constructor(
     private readonly userRepository: IUserRepository,
     private readonly tokenRepository: ITokenRepository,
+    private readonly roleRepository: IRoleRepository,
   ) {}
 
   async execute(data: { email: string; password: string }) {
@@ -38,8 +40,11 @@ export class LoginUseCase {
       );
     }
 
+    const userRoles = await this.roleRepository.findRolesByUserId(user.id);
+    const roleNames = userRoles.map((r) => r.name);
+
     const accessToken = jwt.sign(
-      { sub: user.id, email: user.email },
+      { sub: user.id, email: user.email, roles: roleNames },
       env.JWT_ACCESS_SECRET,
       { expiresIn: env.JWT_ACCESS_EXPIRES_IN as jwt.SignOptions["expiresIn"] },
     );
@@ -50,13 +55,17 @@ export class LoginUseCase {
 
     const expiresAt = new Date();
     expiresAt.setDate(expiresAt.getDate() + 7);
-
     await this.tokenRepository.save(user.id, refreshToken, expiresAt);
 
     return {
       accessToken,
       refreshToken,
-      user: { id: user.id, email: user.email, name: user.name },
+      user: {
+        id: user.id,
+        email: user.email,
+        name: user.name,
+        roles: roleNames,
+      },
     };
   }
 }

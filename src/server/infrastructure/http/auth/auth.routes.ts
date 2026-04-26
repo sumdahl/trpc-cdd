@@ -21,7 +21,7 @@ import {
   accessTokenResponseSchema,
   userResponseSchema,
 } from "./auth.schemas";
-import { authMiddleware } from "../middleware/auth.middleware";
+import { authMiddleware, requireRole } from "../middleware/auth.middleware";
 import {
   successResponseSchema,
   errorResponseSchema,

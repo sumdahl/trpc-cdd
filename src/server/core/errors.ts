@@ -5,6 +5,7 @@ export const ErrorCode = {
   INVALID_TOKEN: "INVALID_TOKEN",
   TOKEN_EXPIRED: "TOKEN_EXPIRED",
   UNAUTHORIZED: "UNAUTHORIZED",
+  FORBIDDEN: "FORBIDDEN",
 
   // Email verification
   EMAIL_NOT_VERIFIED: "EMAIL_NOT_VERIFIED",
@@ -18,6 +19,9 @@ export const ErrorCode = {
 
   // User
   USER_NOT_FOUND: "USER_NOT_FOUND",
+
+  // Role
+  ROLE_NOT_FOUND: "ROLE_NOT_FOUND",
 
   // DB
   DB_ERROR: "DB_ERROR",

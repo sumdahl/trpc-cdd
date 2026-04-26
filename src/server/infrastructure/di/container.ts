@@ -4,6 +4,7 @@ import { PostgresUserRepository } from "../persistence/user.pg.repository";
 import { PostgresTokenRepository } from "../persistence/token.pg.repository";
 import { PostgresVerificationTokenRepository } from "../persistence/verification-token.pg.repository";
 import { PostgresPasswordResetTokenRepository } from "../persistence/password-reset-token.pg.repository";
+import { PostgresRoleRepository } from "../persistence/role.pg.repository";
 import { ResendEmailService } from "../email/resend.email.service";
 import { RegisterUseCase } from "../../core/use-cases/auth/register";
 import { LoginUseCase } from "../../core/use-cases/auth/login";
@@ -30,6 +31,10 @@ container.register({
   verificationTokenRepository: asClass(
     PostgresVerificationTokenRepository,
   ).singleton(),
+  passwordResetTokenRepository: asClass(
+    PostgresPasswordResetTokenRepository,
+  ).singleton(),
+  roleRepository: asClass(PostgresRoleRepository).singleton(),
 
   // Services
   emailService: asClass(ResendEmailService).singleton(),
@@ -44,7 +49,4 @@ container.register({
   resendVerificationUseCase: asClass(ResendVerificationUseCase).singleton(),
   forgotPasswordUseCase: asClass(ForgotPasswordUseCase).singleton(),
   resetPasswordUseCase: asClass(ResetPasswordUseCase).singleton(),
-
-  // Repositories (continued)
-  passwordResetTokenRepository: asClass(PostgresPasswordResetTokenRepository).singleton(),
 });

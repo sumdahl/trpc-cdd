@@ -3,6 +3,7 @@ import { PostgresUserRepository } from "../persistence/user.pg.repository";
 import { PostgresTokenRepository } from "../persistence/token.pg.repository";
 import { PostgresVerificationTokenRepository } from "../persistence/verification-token.pg.repository";
 import { PostgresPasswordResetTokenRepository } from "../persistence/password-reset-token.pg.repository";
+import { PostgresRoleRepository } from "../persistence/role.pg.repository";
 import { ResendEmailService } from "../email/resend.email.service";
 import { RegisterUseCase } from "../../core/use-cases/auth/register";
 import { LoginUseCase } from "../../core/use-cases/auth/login";
@@ -23,6 +24,7 @@ export interface Cradle {
   tokenRepository: PostgresTokenRepository;
   verificationTokenRepository: PostgresVerificationTokenRepository;
   passwordResetTokenRepository: PostgresPasswordResetTokenRepository;
+  roleRepository: PostgresRoleRepository;
 
   // Services
   emailService: ResendEmailService;
