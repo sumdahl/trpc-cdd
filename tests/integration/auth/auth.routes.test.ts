@@ -11,6 +11,7 @@ import { createAuthRouter } from "../../../src/server/infrastructure/http/auth/a
 import { InMemoryUserRepository } from "../../mocks/user.in-memory.repository";
 import { InMemoryTokenRepository } from "../../mocks/token.in-memory.repository";
 import { InMemoryVerificationTokenRepository } from "../../mocks/verification-token.in-memory.repository";
+import { InMemoryRoleRepository } from "../../mocks/role.in-memory.repository";
 import { MockEmailService } from "../../mocks/email.service.mock";
 import { errorHandler } from "../../../src/server/infrastructure/http/middleware/error-handler";
 
@@ -23,6 +24,7 @@ beforeAll(() => {
   userRepository = new InMemoryUserRepository();
   const tokenRepository = new InMemoryTokenRepository();
   verificationTokenRepository = new InMemoryVerificationTokenRepository();
+  const roleRepository = new InMemoryRoleRepository();
   emailService = new MockEmailService();
 
   const authRouter = createAuthRouter(
@@ -30,8 +32,9 @@ beforeAll(() => {
       userRepository,
       verificationTokenRepository,
       emailService,
+      roleRepository,
     ),
-    new LoginUseCase(userRepository, tokenRepository),
+    new LoginUseCase(userRepository, tokenRepository, roleRepository),
     new RefreshUseCase(userRepository, tokenRepository),
     new LogoutUseCase(tokenRepository),
     new MeUseCase(userRepository),
@@ -97,11 +100,9 @@ describe("POST /api/v1/auth/login", () => {
   });
 
   it("should login and return tokens after verification", async () => {
-    // get token from mock email service
     const email = emailService.getLastVerificationEmail();
     expect(email).not.toBeNull();
 
-    // verify the email
     await app.request(`/api/v1/auth/verify-email?token=${email!.token}`);
 
     const res = await app.request("/api/v1/auth/login", {
@@ -116,6 +117,7 @@ describe("POST /api/v1/auth/login", () => {
     expect(res.status).toBe(200);
     expect(body.data).toHaveProperty("accessToken");
     expect(body.data).toHaveProperty("refreshToken");
+    expect(body.data.user.roles).toBeArray();
   });
 
   it("should return 401 on wrong password", async () => {
