@@ -13,6 +13,7 @@
     "test:coverage": "bun test --coverage",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "bun run scripts/migrate.ts",
+    "db:seed": "bun run scripts/seed.ts",
     "db:studio": "drizzle-kit studio",
     "export:spec": "bun run scripts/export-spec.ts"
   },
