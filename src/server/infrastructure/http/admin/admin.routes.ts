@@ -206,6 +206,10 @@ export function createAdminRouter(
         content: { "application/json": { schema: errorResponseSchema } },
         description: "User or role not found",
       },
+      409: {
+        content: { "application/json": { schema: errorResponseSchema } },
+        description: "Cannot remove last admin",
+      },
     },
   });
 
@@ -241,7 +245,8 @@ export function createAdminRouter(
 
   router.openapi(removeRoleRoute, async (c) => {
     const { userId, roleName } = c.req.param();
-    await removeRole.execute(userId, roleName);
+    const requestingUserId = c.get("userId");
+    await removeRole.execute(userId, roleName, requestingUserId);
     return successHandler(c, {}, "Role removed successfully");
   });
 

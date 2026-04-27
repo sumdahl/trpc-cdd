@@ -60,4 +60,8 @@ export class InMemoryRoleRepository implements IRoleRepository {
       .map((ur) => ur.roleId);
     return this.roles.filter((r) => roleIds.includes(r.id));
   }
+
+  async countUsersWithRole(roleId: string): Promise<number> {
+    return this.userRoles.filter((ur) => ur.roleId === roleId).length;
+  }
 }

@@ -1,4 +1,4 @@
-import { eq, inArray } from "drizzle-orm";
+import { eq, inArray, sql } from "drizzle-orm";
 import { DB } from "../db";
 import {
   roles,
@@ -110,6 +110,23 @@ export class PostgresRoleRepository implements IRoleRepository {
     } catch (err) {
       logger.error({ err }, "[DB] findRolesByUserId failed");
       throw new AppError(ErrorCode.DB_ERROR, "Failed to find user roles", 500);
+    }
+  }
+
+  async countUsersWithRole(roleId: string): Promise<number> {
+    try {
+      const result = await this.db
+        .select({ count: sql<number>`count(*)::int` })
+        .from(userRoles)
+        .where(eq(userRoles.roleId, roleId));
+      return result[0]?.count ?? 0;
+    } catch (err) {
+      logger.error({ err }, "[DB] countUsersWithRole failed");
+      throw new AppError(
+        ErrorCode.DB_ERROR,
+        "Failed to count users with role",
+        500,
+      );
     }
   }
 }

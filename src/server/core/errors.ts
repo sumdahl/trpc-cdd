@@ -22,6 +22,7 @@ export const ErrorCode = {
 
   // Role
   ROLE_NOT_FOUND: "ROLE_NOT_FOUND",
+  LAST_ADMIN: "LAST_ADMIN",
 
   // DB
   DB_ERROR: "DB_ERROR",

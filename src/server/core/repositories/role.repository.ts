@@ -9,4 +9,5 @@ export interface IRoleRepository {
   assignRoleToUser(userId: string, roleId: string): Promise<void>;
   removeRoleFromUser(userId: string, roleId: string): Promise<void>;
   findRolesByUserId(userId: string): Promise<RoleEntity[]>;
+  countUsersWithRole(roleId: string): Promise<number>;
 }
