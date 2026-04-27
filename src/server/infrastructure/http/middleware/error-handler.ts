@@ -1,5 +1,5 @@
 import { Context } from "hono";
-import { AppError } from "../../../core/errors";
+import { AppError, ErrorCode } from "../../../core/errors";
 import { formatError } from "../response/response.formatter";
 import { logger } from "../../logger";
 
@@ -22,7 +22,18 @@ export const errorHandler = (err: Error, c: Context) => {
   };
 
   if (err instanceof AppError) {
-    // expected domain error — warn level
+    // DB errors → 503 Service Unavailable
+    if (err.code === ErrorCode.DB_ERROR) {
+      logger.error(meta, "database error");
+      return c.json(
+        formatError(
+          ErrorCode.DB_ERROR,
+          "Service temporarily unavailable. Please try again later.",
+        ),
+        503,
+      );
+    }
+
     logger.warn(meta, "domain error");
     return c.json(formatError(err.code, err.message), err.statusCode);
   }
@@ -50,7 +61,6 @@ export const errorHandler = (err: Error, c: Context) => {
     }
   }
 
-  // unexpected error — error level
   logger.error(meta, "unexpected error");
   return c.json(
     formatError("INTERNAL_SERVER_ERROR", "Something went wrong"),
