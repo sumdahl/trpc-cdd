@@ -4,6 +4,7 @@ import jwt from "jsonwebtoken";
 import { env } from "../../../config/env";
 import { AppError, ErrorCode } from "../../../core/errors";
 import { AppContext } from "../types/context";
+import { container } from "../../di/container";
 
 type JwtPayload = {
   sub: string;
@@ -23,10 +24,10 @@ export const authMiddleware: MiddlewareHandler<AppContext> = createMiddleware(
     }
 
     const token = authHeader.split(" ")[1];
+    let payload: JwtPayload;
+
     try {
-      const payload = jwt.verify(token, env.JWT_ACCESS_SECRET) as JwtPayload;
-      c.set("userId", payload.sub);
-      c.set("roles", payload.roles ?? []);
+      payload = jwt.verify(token, env.JWT_ACCESS_SECRET) as JwtPayload;
     } catch {
       throw new AppError(
         ErrorCode.UNAUTHORIZED,
@@ -34,6 +35,16 @@ export const authMiddleware: MiddlewareHandler<AppContext> = createMiddleware(
         401,
       );
     }
+
+    // verify user still exists in DB
+    const { userRepository } = container.cradle;
+    const user = await userRepository.findById(payload.sub);
+    if (!user) {
+      throw new AppError(ErrorCode.UNAUTHORIZED, "User no longer exists", 401);
+    }
+
+    c.set("userId", payload.sub);
+    c.set("roles", payload.roles ?? []);
 
     await next();
   },
@@ -72,10 +83,8 @@ export const requireOwnership = (
     const userId = c.get("userId");
     const resourceUserId = getResourceUserId(c);
     const userRoles = c.get("roles") ?? [];
-
     if (userId !== resourceUserId && !userRoles.includes("admin")) {
       throw new AppError(ErrorCode.FORBIDDEN, "Access denied", 403);
     }
-
     await next();
   });
