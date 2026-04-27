@@ -2,10 +2,10 @@ import { logger } from "../logger";
 import { eq } from "drizzle-orm";
 import { DB } from "../db";
 import { passwordResetTokens } from "./schema/user.schema";
-import { ITokenRepository } from "../../core/repositories/token.repository";
+import { IPasswordResetTokenRepository } from "../../core/repositories/password-reset-token.repository";
 import { AppError, ErrorCode } from "../../core/errors";
 
-export class PostgresPasswordResetTokenRepository implements ITokenRepository {
+export class PostgresPasswordResetTokenRepository implements IPasswordResetTokenRepository {
   constructor(private readonly db: DB) {}
 
   async save(userId: string, token: string, expiresAt: Date): Promise<void> {
@@ -17,7 +17,7 @@ export class PostgresPasswordResetTokenRepository implements ITokenRepository {
         expiresAt,
       });
     } catch (err) {
-      logger.error("[DB] save password reset token failed:", err);
+      logger.error({ err }, "[DB] save password reset token failed");
       throw new AppError(
         ErrorCode.DB_ERROR,
         "Failed to save password reset token",
@@ -37,7 +37,7 @@ export class PostgresPasswordResetTokenRepository implements ITokenRepository {
       if (!row) return null;
       return { userId: row.userId, expiresAt: row.expiresAt };
     } catch (err) {
-      logger.error("[DB] find password reset token failed:", err);
+      logger.error({ err }, "[DB] find password reset token failed");
       throw new AppError(
         ErrorCode.DB_ERROR,
         "Failed to find password reset token",
@@ -52,7 +52,7 @@ export class PostgresPasswordResetTokenRepository implements ITokenRepository {
         .delete(passwordResetTokens)
         .where(eq(passwordResetTokens.token, token));
     } catch (err) {
-      logger.error("[DB] delete password reset token failed:", err);
+      logger.error({ err }, "[DB] delete password reset token failed");
       throw new AppError(
         ErrorCode.DB_ERROR,
         "Failed to delete password reset token",
@@ -67,7 +67,10 @@ export class PostgresPasswordResetTokenRepository implements ITokenRepository {
         .delete(passwordResetTokens)
         .where(eq(passwordResetTokens.userId, userId));
     } catch (err) {
-      logger.error("[DB] deleteAllForUser password reset tokens failed:", err);
+      logger.error(
+        { err },
+        "[DB] deleteAllForUser password reset tokens failed",
+      );
       throw new AppError(
         ErrorCode.DB_ERROR,
         "Failed to delete password reset tokens",

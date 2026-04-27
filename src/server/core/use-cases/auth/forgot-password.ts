@@ -1,12 +1,12 @@
 import { IUserRepository } from "../../repositories/user.repository";
-import { ITokenRepository } from "../../repositories/token.repository";
+import { IPasswordResetTokenRepository } from "../../repositories/password-reset-token.repository";
 import { IEmailService } from "../../services/email.service";
 import crypto from "crypto";
 
 export class ForgotPasswordUseCase {
   constructor(
     private readonly userRepository: IUserRepository,
-    private readonly passwordResetTokenRepository: ITokenRepository,
+    private readonly passwordResetTokenRepository: IPasswordResetTokenRepository,
     private readonly emailService: IEmailService,
   ) {}
 

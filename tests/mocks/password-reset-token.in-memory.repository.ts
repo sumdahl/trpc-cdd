@@ -1,6 +1,6 @@
-import { ITokenRepository } from "../../src/server/core/repositories/token.repository";
+import { IPasswordResetTokenRepository } from "../../src/server/core/repositories/password-reset-token.repository";
 
-export class InMemoryPasswordResetTokenRepository implements ITokenRepository {
+export class InMemoryPasswordResetTokenRepository implements IPasswordResetTokenRepository {
   private tokens: {
     id: string;
     userId: string;
@@ -12,7 +12,9 @@ export class InMemoryPasswordResetTokenRepository implements ITokenRepository {
     this.tokens.push({ id: crypto.randomUUID(), userId, token, expiresAt });
   }
 
-  async find(token: string): Promise<{ userId: string; expiresAt: Date } | null> {
+  async find(
+    token: string,
+  ): Promise<{ userId: string; expiresAt: Date } | null> {
     const found = this.tokens.find((t) => t.token === token);
     if (!found) return null;
     return { userId: found.userId, expiresAt: found.expiresAt };
