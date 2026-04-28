@@ -40,12 +40,26 @@ export class PostgresRoleRepository implements IRoleRepository {
     }
   }
 
-  async findAll(): Promise<RoleEntity[]> {
+  async findAll(
+    options: { limit?: number; offset?: number } = {},
+  ): Promise<{ roles: RoleEntity[]; total: number }> {
     try {
-      const rows = await this.db.select().from(roles);
-      return rows.map(
-        (r) => new RoleEntity(r.id, r.name, r.description, r.createdAt),
-      );
+      const { limit = 20, offset = 0 } = options;
+      const [rows, countResult] = await Promise.all([
+        this.db
+          .select()
+          .from(roles)
+          .limit(limit)
+          .offset(offset)
+          .orderBy(roles.name),
+        this.db.select({ count: sql<number>`count(*)::int` }).from(roles),
+      ]);
+      return {
+        roles: rows.map(
+          (r) => new RoleEntity(r.id, r.name, r.description, r.createdAt),
+        ),
+        total: countResult[0].count,
+      };
     } catch (err) {
       logger.error({ err }, "[DB] findAll roles failed");
       throw new AppError(ErrorCode.DB_ERROR, "Failed to find roles", 500);

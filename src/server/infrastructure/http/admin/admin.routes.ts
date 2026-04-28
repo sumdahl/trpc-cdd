@@ -129,18 +129,21 @@ export function createAdminRouter(
     method: "get",
     path: "/roles",
     tags: ["Admin"],
-    description: "Get all roles — admin only",
+    description: "Get all roles with pagination — admin only",
     middleware: [authMiddleware, requireRole("admin")],
+    request: {
+      query: paginationQuerySchema,
+    },
     responses: {
       200: {
         content: {
           "application/json": {
             schema: successResponseSchema(
-              z.object({ roles: z.array(roleResponseSchema) }),
+              paginatedResponseSchema(roleResponseSchema),
             ),
           },
         },
-        description: "List of all roles",
+        description: "Paginated list of roles",
       },
       401: {
         content: { "application/json": { schema: errorResponseSchema } },
@@ -240,8 +243,9 @@ export function createAdminRouter(
   });
 
   router.openapi(getAllRolesRoute, async (c) => {
-    const roles = await getAllRoles.execute();
-    return successHandler(c, { roles });
+    const { page, limit } = c.req.valid("query");
+    const result = await getAllRoles.execute({ page, limit });
+    return successHandler(c, result);
   });
 
   router.openapi(assignRoleRoute, async (c) => {

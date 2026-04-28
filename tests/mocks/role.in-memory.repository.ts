@@ -29,8 +29,13 @@ export class InMemoryRoleRepository implements IRoleRepository {
     return this.roles.find((r) => r.name === name) ?? null;
   }
 
-  async findAll(): Promise<RoleEntity[]> {
-    return this.roles;
+  async findAll(
+    options: { limit?: number; offset?: number } = {},
+  ): Promise<{ roles: RoleEntity[]; total: number }> {
+    const { limit = 20, offset = 0 } = options;
+    const total = this.roles.length;
+    const roles = this.roles.slice(offset, offset + limit);
+    return { roles, total };
   }
 
   async findPermissionsByRoleIds(
