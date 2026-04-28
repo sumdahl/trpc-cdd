@@ -53,12 +53,25 @@ export class InMemoryRoleRepository implements IRoleRepository {
       (ur) => !(ur.userId === userId && ur.roleId === roleId),
     );
   }
-
   async findRolesByUserId(userId: string): Promise<RoleEntity[]> {
     const roleIds = this.userRoles
       .filter((ur) => ur.userId === userId)
       .map((ur) => ur.roleId);
     return this.roles.filter((r) => roleIds.includes(r.id));
+  }
+
+  async findRolesByUserIds(
+    userIds: string[],
+  ): Promise<Map<string, RoleEntity[]>> {
+    const map = new Map<string, RoleEntity[]>();
+    for (const userId of userIds) {
+      const roleIds = this.userRoles
+        .filter((ur) => ur.userId === userId)
+        .map((ur) => ur.roleId);
+      const userRoleEntities = this.roles.filter((r) => roleIds.includes(r.id));
+      map.set(userId, userRoleEntities);
+    }
+    return map;
   }
 
   async countUsersWithRole(roleId: string): Promise<number> {

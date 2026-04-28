@@ -1,4 +1,4 @@
-import { eq, inArray, sql } from "drizzle-orm";
+import { eq, inArray, sql, and } from "drizzle-orm";
 import { DB } from "../db";
 import {
   roles,
@@ -89,7 +89,9 @@ export class PostgresRoleRepository implements IRoleRepository {
 
   async removeRoleFromUser(userId: string, roleId: string): Promise<void> {
     try {
-      await this.db.delete(userRoles).where(eq(userRoles.userId, userId));
+      await this.db
+        .delete(userRoles)
+        .where(and(eq(userRoles.userId, userId), eq(userRoles.roleId, roleId))); // ← bug fix
     } catch (err) {
       logger.error({ err }, "[DB] removeRoleFromUser failed");
       throw new AppError(ErrorCode.DB_ERROR, "Failed to remove role", 500);
@@ -109,6 +111,31 @@ export class PostgresRoleRepository implements IRoleRepository {
       );
     } catch (err) {
       logger.error({ err }, "[DB] findRolesByUserId failed");
+      throw new AppError(ErrorCode.DB_ERROR, "Failed to find user roles", 500);
+    }
+  }
+
+  async findRolesByUserIds(
+    userIds: string[],
+  ): Promise<Map<string, RoleEntity[]>> {
+    try {
+      if (userIds.length === 0) return new Map();
+      const rows = await this.db
+        .select({ userId: userRoles.userId, role: roles })
+        .from(userRoles)
+        .innerJoin(roles, eq(userRoles.roleId, roles.id))
+        .where(inArray(userRoles.userId, userIds));
+
+      const map = new Map<string, RoleEntity[]>();
+      for (const { userId, role: r } of rows) {
+        if (!map.has(userId)) map.set(userId, []);
+        map
+          .get(userId)!
+          .push(new RoleEntity(r.id, r.name, r.description, r.createdAt));
+      }
+      return map;
+    } catch (err) {
+      logger.error({ err }, "[DB] findRolesByUserIds failed");
       throw new AppError(ErrorCode.DB_ERROR, "Failed to find user roles", 500);
     }
   }
