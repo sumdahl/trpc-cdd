@@ -1,5 +1,5 @@
 import { IUserRepository } from "../../repositories/user.repository";
-import { IVerificationTokenRepository } from "../../repositories/verification-token.respository";
+import { IVerificationTokenRepository } from "../../repositories/verification-token.repository";
 import { AppError, ErrorCode } from "../../errors";
 
 export class VerifyEmailUseCase {

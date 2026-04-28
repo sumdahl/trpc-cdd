@@ -2,7 +2,7 @@ import { logger } from "../logger";
 import { eq } from "drizzle-orm";
 import { DB } from "../db";
 import { verificationTokens } from "./schema/user.schema";
-import { IVerificationTokenRepository } from "../../core/repositories/verification-token.respository";
+import { IVerificationTokenRepository } from "../../core/repositories/verification-token.repository";
 import { VerificationTokenEntity } from "../../core/entities/verification-token.entity";
 import { AppError, ErrorCode } from "../../core/errors";
 

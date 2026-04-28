@@ -1,5 +1,5 @@
 import { IUserRepository } from "../../repositories/user.repository";
-import { IVerificationTokenRepository } from "../../repositories/verification-token.respository";
+import { IVerificationTokenRepository } from "../../repositories/verification-token.repository";
 import { IEmailService } from "../../services/email.service";
 import { IRateLimiterService } from "../../services/rate-limiter.service";
 import { AppError, ErrorCode } from "../../errors";
