@@ -34,6 +34,9 @@ export const ErrorCode = {
   VALIDATION_ERROR: "VALIDATION_ERROR",
   NOT_FOUND: "NOT_FOUND",
   INTERNAL_SERVER_ERROR: "INTERNAL_SERVER_ERROR",
+
+  // ... existing codes
+  TOO_MANY_REQUESTS: "TOO_MANY_REQUESTS",
 } as const;
 
 export type ErrorCode = (typeof ErrorCode)[keyof typeof ErrorCode];
@@ -49,6 +52,7 @@ export class AppError extends Error {
       | 404
       | 409
       | 422
+      | 429
       | 500
       | 503 = 400,
   ) {

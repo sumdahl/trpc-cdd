@@ -21,6 +21,7 @@ import { DeleteUserUseCase } from "../../core/use-cases/admin/delete-user";
 import { GetAllRolesUseCase } from "../../core/use-cases/admin/get-all-roles";
 import { AssignRoleUseCase } from "../../core/use-cases/admin/assign-role";
 import { RemoveRoleUseCase } from "../../core/use-cases/admin/remove-role";
+import { InMemoryRateLimiterService } from "../services/in-memory-rate-limiter.service";
 import { Cradle } from "./types";
 
 export const container = createContainer<Cradle>({
@@ -63,4 +64,7 @@ container.register({
   getAllRolesUseCase: asClass(GetAllRolesUseCase).singleton(),
   assignRoleUseCase: asClass(AssignRoleUseCase).singleton(),
   removeRoleUseCase: asClass(RemoveRoleUseCase).singleton(),
+
+  // Services
+  rateLimiterService: asClass(InMemoryRateLimiterService).singleton(),
 });

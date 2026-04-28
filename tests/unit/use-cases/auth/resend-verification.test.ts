@@ -3,21 +3,25 @@ import { ResendVerificationUseCase } from "../../../../src/server/core/use-cases
 import { InMemoryUserRepository } from "../../../mocks/user.in-memory.repository";
 import { InMemoryVerificationTokenRepository } from "../../../mocks/verification-token.in-memory.repository";
 import { MockEmailService } from "../../../mocks/email.service.mock";
+import { MockRateLimiterService } from "../../../mocks/rate-limiter.service.mock";
 import { AppError } from "../../../../src/server/core/errors";
 
 let userRepository: InMemoryUserRepository;
 let verificationTokenRepository: InMemoryVerificationTokenRepository;
 let emailService: MockEmailService;
+let rateLimiterService: MockRateLimiterService;
 let useCase: ResendVerificationUseCase;
 
 beforeEach(() => {
   userRepository = new InMemoryUserRepository();
   verificationTokenRepository = new InMemoryVerificationTokenRepository();
   emailService = new MockEmailService();
+  rateLimiterService = new MockRateLimiterService();
   useCase = new ResendVerificationUseCase(
     userRepository,
     verificationTokenRepository,
     emailService,
+    rateLimiterService,
   );
 });
 
@@ -49,5 +53,12 @@ describe("ResendVerificationUseCase", () => {
     await userRepository.markAsVerified(user.id);
 
     expect(useCase.execute("sumiran@example.com")).rejects.toThrow(AppError);
+  });
+
+  it("should throw TOO_MANY_REQUESTS when rate limited", async () => {
+    rateLimiterService.block();
+    await expect(useCase.execute("sumiran@example.com")).rejects.toMatchObject({
+      code: "TOO_MANY_REQUESTS",
+    });
   });
 });

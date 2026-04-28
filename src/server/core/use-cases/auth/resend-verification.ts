@@ -1,6 +1,7 @@
 import { IUserRepository } from "../../repositories/user.repository";
-import { IVerificationTokenRepository } from "../../repositories/verification-token.repository";
+import { IVerificationTokenRepository } from "../../repositories/verification-token.respository";
 import { IEmailService } from "../../services/email.service";
+import { IRateLimiterService } from "../../services/rate-limiter.service";
 import { AppError, ErrorCode } from "../../errors";
 import crypto from "crypto";
 
@@ -9,9 +10,24 @@ export class ResendVerificationUseCase {
     private readonly userRepository: IUserRepository,
     private readonly verificationTokenRepository: IVerificationTokenRepository,
     private readonly emailService: IEmailService,
+    private readonly rateLimiterService: IRateLimiterService,
   ) {}
 
-  async execute(email: string) {
+  async execute(email: string): Promise<void> {
+    const allowed = await this.rateLimiterService.isAllowed(
+      `resend-verification:${email}`,
+      3,
+      60 * 60 * 1000,
+    );
+
+    if (!allowed) {
+      throw new AppError(
+        ErrorCode.TOO_MANY_REQUESTS,
+        "Too many verification email attempts. Please try again later.",
+        429,
+      );
+    }
+
     const user = await this.userRepository.findByEmail(email);
     if (!user) {
       throw new AppError(ErrorCode.USER_NOT_FOUND, "User not found", 404);

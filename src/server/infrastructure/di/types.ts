@@ -20,6 +20,7 @@ import { DeleteUserUseCase } from "../../core/use-cases/admin/delete-user";
 import { GetAllRolesUseCase } from "../../core/use-cases/admin/get-all-roles";
 import { AssignRoleUseCase } from "../../core/use-cases/admin/assign-role";
 import { RemoveRoleUseCase } from "../../core/use-cases/admin/remove-role";
+import { InMemoryRateLimiterService } from "../services/in-memory-rate-limiter.service";
 
 export interface Cradle {
   // Infrastructure
@@ -53,4 +54,7 @@ export interface Cradle {
   getAllRolesUseCase: GetAllRolesUseCase;
   assignRoleUseCase: AssignRoleUseCase;
   removeRoleUseCase: RemoveRoleUseCase;
+
+  // Rate limiter
+  rateLimiterService: InMemoryRateLimiterService;
 }
