@@ -7,14 +7,18 @@ import {
   index,
 } from "drizzle-orm/pg-core";
 
-export const users = pgTable("users", {
-  id: varchar("id").primaryKey(),
-  email: varchar("email").notNull().unique(),
-  name: varchar("name").notNull(),
-  passwordHash: text("password_hash").notNull(),
-  isVerified: boolean("is_verified").notNull().default(false),
-  createdAt: timestamp("created_at").notNull().defaultNow(),
-});
+export const users = pgTable(
+  "users",
+  {
+    id: varchar("id").primaryKey(),
+    email: varchar("email").notNull().unique(),
+    name: varchar("name").notNull(),
+    passwordHash: text("password_hash").notNull(),
+    isVerified: boolean("is_verified").notNull().default(false),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+  },
+  (t) => [index("users_is_verified_idx").on(t.isVerified)],
+);
 
 export const refreshTokens = pgTable(
   "refresh_tokens",
@@ -27,7 +31,10 @@ export const refreshTokens = pgTable(
     expiresAt: timestamp("expires_at").notNull(),
     createdAt: timestamp("created_at").notNull().defaultNow(),
   },
-  (t) => [index("refresh_tokens_user_id_idx").on(t.userId)],
+  (t) => [
+    index("refresh_tokens_user_id_idx").on(t.userId),
+    index("refresh_tokens_expires_at_idx").on(t.expiresAt),
+  ],
 );
 
 export const verificationTokens = pgTable(
@@ -41,7 +48,10 @@ export const verificationTokens = pgTable(
     expiresAt: timestamp("expires_at").notNull(),
     createdAt: timestamp("created_at").notNull().defaultNow(),
   },
-  (t) => [index("verification_tokens_user_id_idx").on(t.userId)],
+  (t) => [
+    index("verification_tokens_user_id_idx").on(t.userId),
+    index("verification_tokens_expires_at_idx").on(t.expiresAt),
+  ],
 );
 
 export const passwordResetTokens = pgTable(
@@ -55,10 +65,8 @@ export const passwordResetTokens = pgTable(
     expiresAt: timestamp("expires_at").notNull(),
     createdAt: timestamp("created_at").notNull().defaultNow(),
   },
-  (t) => [index("password_reset_tokens_user_id_idx").on(t.userId)],
+  (t) => [
+    index("password_reset_tokens_user_id_idx").on(t.userId),
+    index("password_reset_tokens_expires_at_idx").on(t.expiresAt),
+  ],
 );
-
-export type UserRecord = typeof users.$inferSelect;
-export type RefreshTokenRecord = typeof refreshTokens.$inferSelect;
-export type VerificationTokenRecord = typeof verificationTokens.$inferSelect;
-export type PasswordResetTokenRecord = typeof passwordResetTokens.$inferSelect;
