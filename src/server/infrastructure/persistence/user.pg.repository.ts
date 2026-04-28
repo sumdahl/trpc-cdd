@@ -1,5 +1,5 @@
 import { logger } from "../logger";
-import { eq } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 import { DB } from "../db";
 import { users } from "./schema/user.schema";
 import { IUserRepository } from "../../core/repositories/user.repository";
@@ -105,26 +105,39 @@ export class PostgresUserRepository implements IUserRepository {
     }
   }
 
-  async findAll(): Promise<UserEntity[]> {
+  async findAll(
+    options: { limit?: number; offset?: number } = {},
+  ): Promise<{ users: UserEntity[]; total: number }> {
     try {
-      const rows = await this.db.select().from(users);
-      return rows.map(
-        (r) =>
-          new UserEntity(
-            r.id,
-            r.email,
-            r.name,
-            r.passwordHash,
-            r.isVerified,
-            r.createdAt,
-          ),
-      );
+      const { limit = 20, offset = 0 } = options;
+      const [rows, countResult] = await Promise.all([
+        this.db
+          .select()
+          .from(users)
+          .limit(limit)
+          .offset(offset)
+          .orderBy(users.createdAt),
+        this.db.select({ count: sql<number>`count(*)::int` }).from(users),
+      ]);
+      return {
+        users: rows.map(
+          (r) =>
+            new UserEntity(
+              r.id,
+              r.email,
+              r.name,
+              r.passwordHash,
+              r.isVerified,
+              r.createdAt,
+            ),
+        ),
+        total: countResult[0].count,
+      };
     } catch (err) {
       logger.error({ err }, "[DB] findAll users failed");
       throw new AppError(ErrorCode.DB_ERROR, "Failed to find users", 500);
     }
   }
-
   async delete(userId: string): Promise<void> {
     try {
       await this.db.delete(users).where(eq(users.id, userId));

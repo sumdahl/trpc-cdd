@@ -11,6 +11,10 @@ import {
   assignRoleSchema,
   roleResponseSchema,
 } from "./admin.schemas";
+import {
+  paginationQuerySchema,
+  paginatedResponseSchema,
+} from "../shared/pagination";
 import { GetAllUsersUseCase } from "../../../core/use-cases/admin/get-all-users";
 import { GetUserByIdUseCase } from "../../../core/use-cases/admin/get-user-by-id";
 import { DeleteUserUseCase } from "../../../core/use-cases/admin/delete-user";
@@ -32,18 +36,21 @@ export function createAdminRouter(
     method: "get",
     path: "/users",
     tags: ["Admin"],
-    description: "Get all users — admin only",
+    description: "Get all users with pagination — admin only",
     middleware: [authMiddleware, requireRole("admin")],
+    request: {
+      query: paginationQuerySchema,
+    },
     responses: {
       200: {
         content: {
           "application/json": {
             schema: successResponseSchema(
-              z.object({ users: z.array(userResponseSchema) }),
+              paginatedResponseSchema(userResponseSchema),
             ),
           },
         },
-        description: "List of all users",
+        description: "Paginated list of users",
       },
       401: {
         content: { "application/json": { schema: errorResponseSchema } },
@@ -214,8 +221,9 @@ export function createAdminRouter(
   });
 
   router.openapi(getAllUsersRoute, async (c) => {
-    const users = await getAllUsers.execute();
-    return successHandler(c, { users });
+    const { page, limit } = c.req.valid("query");
+    const result = await getAllUsers.execute({ page, limit });
+    return successHandler(c, result);
   });
 
   router.openapi(getUserByIdRoute, async (c) => {

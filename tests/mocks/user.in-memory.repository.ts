@@ -57,8 +57,13 @@ export class InMemoryUserRepository implements IUserRepository {
     );
   }
 
-  async findAll(): Promise<UserEntity[]> {
-    return this.users;
+  async findAll(
+    options: { limit?: number; offset?: number } = {},
+  ): Promise<{ users: UserEntity[]; total: number }> {
+    const { limit = 20, offset = 0 } = options;
+    const total = this.users.length;
+    const users = this.users.slice(offset, offset + limit);
+    return { users, total };
   }
 
   async delete(userId: string): Promise<void> {

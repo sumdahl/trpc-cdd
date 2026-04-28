@@ -1,14 +1,21 @@
 import { IUserRepository } from "../../repositories/user.repository";
 import { IRoleRepository } from "../../repositories/role.repository";
 
+import { PaginationQuery, paginate, getOffset } from "../../shared/pagination";
+
 export class GetAllUsersUseCase {
   constructor(
     private readonly userRepository: IUserRepository,
     private readonly roleRepository: IRoleRepository,
   ) {}
 
-  async execute() {
-    const users = await this.userRepository.findAll();
+  async execute({ page, limit }: PaginationQuery) {
+    const offset = getOffset(page, limit);
+    const { users, total } = await this.userRepository.findAll({
+      limit,
+      offset,
+    });
+
     const usersWithRoles = await Promise.all(
       users.map(async (user) => {
         const roles = await this.roleRepository.findRolesByUserId(user.id);
@@ -22,6 +29,7 @@ export class GetAllUsersUseCase {
         };
       }),
     );
-    return usersWithRoles;
+
+    return paginate(usersWithRoles, total, page, limit);
   }
 }

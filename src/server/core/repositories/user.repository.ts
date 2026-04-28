@@ -3,7 +3,10 @@ import { UserEntity } from "../entities/user.entity";
 export interface IUserRepository {
   findById(id: string): Promise<UserEntity | null>;
   findByEmail(email: string): Promise<UserEntity | null>;
-  findAll(): Promise<UserEntity[]>;
+  findAll(options?: {
+    limit?: number;
+    offset?: number;
+  }): Promise<{ users: UserEntity[]; total: number }>;
   create(data: {
     email: string;
     name: string;
