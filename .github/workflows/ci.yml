@@ -6,14 +6,15 @@ on:
   pull_request:
     branches: [main]
 
+# Global fix for Node.js 20 deprecation warning
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 jobs:
   test:
     name: Test
     runs-on: ubuntu-latest
     environment: cdd-hono
-    env:
-      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
-
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -53,9 +54,6 @@ jobs:
     runs-on: ubuntu-latest
     needs: test
     environment: cdd-hono
-    env:
-      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
-
     steps:
       - name: Checkout
         uses: actions/checkout@v4
