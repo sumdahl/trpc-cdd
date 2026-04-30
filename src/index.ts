@@ -20,6 +20,12 @@ const openApiDoc = app.getOpenAPIDocument({
   ],
 });
 
+app.openAPIRegistry.registerComponent("securitySchemes", "bearerAuth", {
+  type: "http",
+  scheme: "bearer",
+  bearerFormat: "JWT",
+});
+
 const root = new Hono();
 
 root.get("/openapi.json", (c) => c.json(openApiDoc));

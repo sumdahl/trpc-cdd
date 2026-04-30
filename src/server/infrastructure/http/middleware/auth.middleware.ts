@@ -10,6 +10,8 @@ type JwtPayload = {
   sub: string;
   email: string;
   roles: string[];
+  jti: string;
+  exp: number;
 };
 
 export const authMiddleware: MiddlewareHandler<AppContext> = createMiddleware(
@@ -36,6 +38,20 @@ export const authMiddleware: MiddlewareHandler<AppContext> = createMiddleware(
       );
     }
 
+    if (payload.jti) {
+      const { tokenBlacklistService } = container.cradle;
+      const blacklisted = await tokenBlacklistService.isBlacklisted(
+        payload.jti,
+      );
+      if (blacklisted) {
+        throw new AppError(
+          ErrorCode.UNAUTHORIZED,
+          "Token has been revoked",
+          401,
+        );
+      }
+    }
+
     // verify user still exists in DB
     const { userRepository } = container.cradle;
     const user = await userRepository.findById(payload.sub);
@@ -45,6 +61,8 @@ export const authMiddleware: MiddlewareHandler<AppContext> = createMiddleware(
 
     c.set("userId", payload.sub);
     c.set("roles", payload.roles ?? []);
+    c.set("jti", payload.jti);
+    c.set("exp", payload.exp);
 
     await next();
   },

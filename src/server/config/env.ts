@@ -13,6 +13,7 @@ const envSchema = z.object({
   RESEND_KEY: z.string().min(1),
   EMAIL_FROM: z.string().default("noreply@sumirandahal.com.np"),
   APP_URL: z.string().default("http://localhost:8000"),
+  REDIS_URL: z.string().default("redis://localhost:6379"),
 });
 
 const parsed = envSchema.safeParse(process.env);

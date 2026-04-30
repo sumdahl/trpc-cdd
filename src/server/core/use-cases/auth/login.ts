@@ -43,8 +43,9 @@ export class LoginUseCase {
     const userRoles = await this.roleRepository.findRolesByUserId(user.id);
     const roleNames = userRoles.map((r) => r.name);
 
+    const jti = crypto.randomUUID();
     const accessToken = jwt.sign(
-      { sub: user.id, email: user.email, roles: roleNames },
+      { sub: user.id, email: user.email, roles: roleNames, jti },
       env.JWT_ACCESS_SECRET,
       { expiresIn: env.JWT_ACCESS_EXPIRES_IN as jwt.SignOptions["expiresIn"] },
     );

@@ -22,7 +22,10 @@ import { GetAllRolesUseCase } from "../../core/use-cases/admin/get-all-roles";
 import { AssignRoleUseCase } from "../../core/use-cases/admin/assign-role";
 import { RemoveRoleUseCase } from "../../core/use-cases/admin/remove-role";
 import { InMemoryRateLimiterService } from "../services/in-memory-rate-limiter.service";
+import { redis } from "../redis";
+import { RedisTokenBlacklistService } from "../services/redis-token-blacklist.service";
 import { Cradle } from "./types";
+import { TokenExpiredError } from "jsonwebtoken";
 
 export const container = createContainer<Cradle>({
   injectionMode: InjectionMode.CLASSIC,
@@ -31,6 +34,10 @@ export const container = createContainer<Cradle>({
 container.register({
   // Infrastructure
   db: asValue(db),
+
+  //Redis
+  redis: asValue(redis),
+  tokenBlacklistService: asClass(RedisTokenBlacklistService).singleton(),
 
   // Repositories
   userRepository: asClass(PostgresUserRepository).singleton(),

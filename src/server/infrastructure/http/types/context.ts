@@ -7,6 +7,8 @@ export type AppContext = {
     email: string;
     roles: string[];
     permissions: string[];
+    jti: string;
+    exp: number;
   };
 };
 

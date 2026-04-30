@@ -135,8 +135,11 @@ export function createAuthRouter(
   const logoutRoute = createRoute({
     method: "post",
     path: "/logout",
+    middleware: [authMiddleware],
     tags: ["Auth"],
-    description: "Logout and invalidate refresh token",
+    description:
+      "Logout and invalidate refresh token - requires valid access token",
+    security: [{ bearerAuth: [] }],
     request: {
       body: { content: { "application/json": { schema: logoutSchema } } },
     },
@@ -328,7 +331,9 @@ export function createAuthRouter(
 
   router.openapi(logoutRoute, async (c) => {
     const { refreshToken } = c.req.valid("json");
-    await logout.execute(refreshToken);
+    const jti = c.get("jti");
+    const exp = c.get("exp");
+    await logout.execute(refreshToken, jti, exp);
     return successHandler(c, {}, "Logged out successfully");
   });
 

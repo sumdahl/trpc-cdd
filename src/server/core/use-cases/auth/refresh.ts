@@ -40,8 +40,10 @@ export class RefreshUseCase {
 
     await this.tokenRepository.delete(token);
 
+    const jti = crypto.randomUUID();
+
     const accessToken = jwt.sign(
-      { sub: user.id, email: user.email },
+      { sub: user.id, email: user.email, jti },
       env.JWT_ACCESS_SECRET,
       { expiresIn: env.JWT_ACCESS_EXPIRES_IN as jwt.SignOptions["expiresIn"] },
     );

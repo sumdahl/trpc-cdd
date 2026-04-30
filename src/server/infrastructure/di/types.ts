@@ -21,10 +21,16 @@ import { GetAllRolesUseCase } from "../../core/use-cases/admin/get-all-roles";
 import { AssignRoleUseCase } from "../../core/use-cases/admin/assign-role";
 import { RemoveRoleUseCase } from "../../core/use-cases/admin/remove-role";
 import { InMemoryRateLimiterService } from "../services/in-memory-rate-limiter.service";
+import { RedisTokenBlacklistService } from "../services/redis-token-blacklist.service";
+import { Redis } from "ioredis";
 
 export interface Cradle {
   // Infrastructure
   db: DB;
+
+  //Redis
+  redis: Redis;
+  tokenBlacklistService: RedisTokenBlacklistService;
 
   // Repositories
   userRepository: PostgresUserRepository;
