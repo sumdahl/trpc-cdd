@@ -1,4 +1,6 @@
+// @.rules
 import type { MiddlewareHandler, Context } from "hono";
+import { ErrorCode } from "../../../core/errors";
 import { formatError } from "../response/response.formatter";
 
 export type RateLimiterOptions = {
@@ -74,7 +76,7 @@ export function rateLimiter({
 
       return c.json(
         formatError(
-          "RATE_LIMIT_EXCEEDED",
+          ErrorCode.TOO_MANY_REQUESTS,
           "Too many requests, please try again later.",
         ),
         429 as const,

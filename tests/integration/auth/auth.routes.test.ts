@@ -1,20 +1,24 @@
+// @.rules
 import { describe, it, expect, beforeAll } from "bun:test";
 import { OpenAPIHono } from "@hono/zod-openapi";
-import { RegisterUseCase } from "../../../src/server/core/use-cases/auth/register";
+import { ForgotPasswordUseCase } from "../../../src/server/core/use-cases/auth/forgot-password";
 import { LoginUseCase } from "../../../src/server/core/use-cases/auth/login";
-import { RefreshUseCase } from "../../../src/server/core/use-cases/auth/refresh";
 import { LogoutUseCase } from "../../../src/server/core/use-cases/auth/logout";
 import { MeUseCase } from "../../../src/server/core/use-cases/auth/me";
-import { VerifyEmailUseCase } from "../../../src/server/core/use-cases/auth/verify-email";
+import { RefreshUseCase } from "../../../src/server/core/use-cases/auth/refresh";
+import { RegisterUseCase } from "../../../src/server/core/use-cases/auth/register";
 import { ResendVerificationUseCase } from "../../../src/server/core/use-cases/auth/resend-verification";
+import { ResetPasswordUseCase } from "../../../src/server/core/use-cases/auth/reset-password";
+import { VerifyEmailUseCase } from "../../../src/server/core/use-cases/auth/verify-email";
 import { createAuthRouter } from "../../../src/server/infrastructure/http/auth/auth.routes";
-import { InMemoryUserRepository } from "../../mocks/user.in-memory.repository";
-import { InMemoryTokenRepository } from "../../mocks/token.in-memory.repository";
-import { InMemoryVerificationTokenRepository } from "../../mocks/verification-token.in-memory.repository";
+import { errorHandler } from "../../../src/server/infrastructure/http/middleware/error-handler";
+import { InMemoryPasswordResetTokenRepository } from "../../mocks/password-reset-token.in-memory.repository";
 import { InMemoryRoleRepository } from "../../mocks/role.in-memory.repository";
+import { InMemoryTokenRepository } from "../../mocks/token.in-memory.repository";
+import { InMemoryUserRepository } from "../../mocks/user.in-memory.repository";
+import { InMemoryVerificationTokenRepository } from "../../mocks/verification-token.in-memory.repository";
 import { MockEmailService } from "../../mocks/email.service.mock";
 import { MockRateLimiterService } from "../../mocks/rate-limiter.service.mock";
-import { errorHandler } from "../../../src/server/infrastructure/http/middleware/error-handler";
 
 let app: OpenAPIHono;
 let userRepository: InMemoryUserRepository;
@@ -25,6 +29,8 @@ beforeAll(() => {
   userRepository = new InMemoryUserRepository();
   const tokenRepository = new InMemoryTokenRepository();
   verificationTokenRepository = new InMemoryVerificationTokenRepository();
+  const passwordResetTokenRepository =
+    new InMemoryPasswordResetTokenRepository();
   const roleRepository = new InMemoryRoleRepository();
   emailService = new MockEmailService();
   const rateLimiterService = new MockRateLimiterService();
@@ -46,6 +52,17 @@ beforeAll(() => {
       verificationTokenRepository,
       emailService,
       rateLimiterService,
+    ),
+    new ForgotPasswordUseCase(
+      userRepository,
+      passwordResetTokenRepository,
+      emailService,
+      rateLimiterService,
+    ),
+    new ResetPasswordUseCase(
+      userRepository,
+      passwordResetTokenRepository,
+      tokenRepository,
     ),
   );
 

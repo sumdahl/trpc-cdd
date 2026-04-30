@@ -1,3 +1,4 @@
+// @.rules
 import { createContainer, asClass, asValue, InjectionMode } from "awilix";
 import { db } from "../db";
 import { PostgresUserRepository } from "../persistence/user.pg.repository";
@@ -25,7 +26,6 @@ import { InMemoryRateLimiterService } from "../services/in-memory-rate-limiter.s
 import { redis } from "../redis";
 import { RedisTokenBlacklistService } from "../services/redis-token-blacklist.service";
 import { Cradle } from "./types";
-import { TokenExpiredError } from "jsonwebtoken";
 
 export const container = createContainer<Cradle>({
   injectionMode: InjectionMode.CLASSIC,

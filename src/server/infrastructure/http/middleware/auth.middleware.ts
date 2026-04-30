@@ -1,4 +1,5 @@
-import { MiddlewareHandler } from "hono";
+// @.rules
+import { Context, MiddlewareHandler } from "hono";
 import { createMiddleware } from "hono/factory";
 import jwt from "jsonwebtoken";
 import { env } from "../../../config/env";
@@ -60,6 +61,7 @@ export const authMiddleware: MiddlewareHandler<AppContext> = createMiddleware(
     }
 
     c.set("userId", payload.sub);
+    c.set("email", payload.email);
     c.set("roles", payload.roles ?? []);
     c.set("jti", payload.jti);
     c.set("exp", payload.exp);
@@ -95,7 +97,7 @@ export const requirePermission = (
   });
 
 export const requireOwnership = (
-  getResourceUserId: (c: any) => string,
+  getResourceUserId: (c: Context<AppContext>) => string,
 ): MiddlewareHandler<AppContext> =>
   createMiddleware(async (c, next) => {
     const userId = c.get("userId");
