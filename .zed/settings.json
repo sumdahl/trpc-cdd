@@ -1,0 +1,8 @@
+{
+  "agent": {
+    "default_model": {
+      "provider": "anthropic",
+      "model": "claude-sonnet-4-5",
+    },
+  },
+}
