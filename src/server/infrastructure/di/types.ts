@@ -1,46 +1,48 @@
-import { DB } from "../db";
-import { PostgresUserRepository } from "../persistence/user.pg.repository";
-import { PostgresTokenRepository } from "../persistence/token.pg.repository";
-import { PostgresVerificationTokenRepository } from "../persistence/verification-token.pg.repository";
-import { PostgresPasswordResetTokenRepository } from "../persistence/password-reset-token.pg.repository";
-import { PostgresRoleRepository } from "../persistence/role.pg.repository";
-import { ResendEmailService } from "../email/resend.email.service";
-import { RegisterUseCase } from "../../core/use-cases/auth/register";
-import { LoginUseCase } from "../../core/use-cases/auth/login";
-import { RefreshUseCase } from "../../core/use-cases/auth/refresh";
-import { LogoutUseCase } from "../../core/use-cases/auth/logout";
-import { MeUseCase } from "../../core/use-cases/auth/me";
-import { VerifyEmailUseCase } from "../../core/use-cases/auth/verify-email";
-import { ResendVerificationUseCase } from "../../core/use-cases/auth/resend-verification";
-import { ForgotPasswordUseCase } from "../../core/use-cases/auth/forgot-password";
-import { ResetPasswordUseCase } from "../../core/use-cases/auth/reset-password";
-import { GetAllUsersUseCase } from "../../core/use-cases/admin/get-all-users";
-import { GetUserByIdUseCase } from "../../core/use-cases/admin/get-user-by-id";
+// @.rules
+import { Redis } from "ioredis";
+import { IPasswordResetTokenRepository } from "../../core/repositories/password-reset-token.repository";
+import { IRoleRepository } from "../../core/repositories/role.repository";
+import { ITokenRepository } from "../../core/repositories/token.repository";
+import { IUserRepository } from "../../core/repositories/user.repository";
+import { IVerificationTokenRepository } from "../../core/repositories/verification-token.repository";
+import { IEmailService } from "../../core/services/email.service";
+import { IRateLimiterService } from "../../core/services/rate-limiter.service";
+import { ITokenBlacklistService } from "../../core/services/token-blacklist.service";
+import { AssignRoleUseCase } from "../../core/use-cases/admin/assign-role";
 import { DeleteUserUseCase } from "../../core/use-cases/admin/delete-user";
 import { GetAllRolesUseCase } from "../../core/use-cases/admin/get-all-roles";
-import { AssignRoleUseCase } from "../../core/use-cases/admin/assign-role";
+import { GetAllUsersUseCase } from "../../core/use-cases/admin/get-all-users";
+import { GetUserByIdUseCase } from "../../core/use-cases/admin/get-user-by-id";
 import { RemoveRoleUseCase } from "../../core/use-cases/admin/remove-role";
-import { InMemoryRateLimiterService } from "../services/in-memory-rate-limiter.service";
-import { RedisTokenBlacklistService } from "../services/redis-token-blacklist.service";
-import { Redis } from "ioredis";
+import { ForgotPasswordUseCase } from "../../core/use-cases/auth/forgot-password";
+import { LoginUseCase } from "../../core/use-cases/auth/login";
+import { LogoutUseCase } from "../../core/use-cases/auth/logout";
+import { MeUseCase } from "../../core/use-cases/auth/me";
+import { RefreshUseCase } from "../../core/use-cases/auth/refresh";
+import { RegisterUseCase } from "../../core/use-cases/auth/register";
+import { ResendVerificationUseCase } from "../../core/use-cases/auth/resend-verification";
+import { ResetPasswordUseCase } from "../../core/use-cases/auth/reset-password";
+import { VerifyEmailUseCase } from "../../core/use-cases/auth/verify-email";
+import { DB } from "../db";
 
 export interface Cradle {
   // Infrastructure
   db: DB;
 
-  //Redis
+  // Redis
   redis: Redis;
-  tokenBlacklistService: RedisTokenBlacklistService;
+  tokenBlacklistService: ITokenBlacklistService;
 
   // Repositories
-  userRepository: PostgresUserRepository;
-  tokenRepository: PostgresTokenRepository;
-  verificationTokenRepository: PostgresVerificationTokenRepository;
-  passwordResetTokenRepository: PostgresPasswordResetTokenRepository;
-  roleRepository: PostgresRoleRepository;
+  userRepository: IUserRepository;
+  tokenRepository: ITokenRepository;
+  verificationTokenRepository: IVerificationTokenRepository;
+  passwordResetTokenRepository: IPasswordResetTokenRepository;
+  roleRepository: IRoleRepository;
 
   // Services
-  emailService: ResendEmailService;
+  emailService: IEmailService;
+  rateLimiterService: IRateLimiterService;
 
   // Auth use-cases
   registerUseCase: RegisterUseCase;
@@ -60,7 +62,4 @@ export interface Cradle {
   getAllRolesUseCase: GetAllRolesUseCase;
   assignRoleUseCase: AssignRoleUseCase;
   removeRoleUseCase: RemoveRoleUseCase;
-
-  // Rate limiter
-  rateLimiterService: InMemoryRateLimiterService;
 }
