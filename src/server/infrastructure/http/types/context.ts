@@ -3,8 +3,8 @@ import { Context } from "hono";
 export type AppContext = {
   Variables: {
     requestId: string;
-    userId: string;
-    email: string;
+    userId?: string;
+    email?: string;
     roles: string[];
     permissions: string[];
     jti: string;
