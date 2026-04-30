@@ -1,0 +1,390 @@
+# Contract-Driven API Development Project Rules
+---
+## Feature Development Protocol
+When developing any new feature or making changes, strictly follow these rules **in order**.
+
+### Pre-Implementation
+
+1. **Always start from the main branch**
+   Ensure you are on `main` before beginning any feature.
+   If not, run:
+   ```
+   git checkout main
+   ```
+
+2. **Create a dedicated feature branch**
+   Create and switch to a new branch:
+   ```
+   git checkout -b <feature-branch-name>
+   ```
+   Use a clear, descriptive name:
+   - `feat/add-user-validation`
+   - `feat/contract-payment-flow`
+   - `fix/api-response-format`
+   - `refactor/cradle-interface-types`
+
+3. **Add rules reference at the top of every new or modified file**
+   The very first line of any file you create or significantly modify must be:
+   ```typescript
+   // @.rules
+   ```
+
+### During Development
+
+- Maintain **strict backward compatibility** at all times unless explicitly told otherwise.
+- Write **both unit tests and integration tests** for every feature or significant change.
+- Follow the existing code style, architecture, and contract-driven patterns of this project.
+- Never use raw strings for error codes — always use `ErrorCode` from `core/errors.ts`.
+- Never use `any` types — use proper TypeScript types everywhere.
+- Never leave unused imports in any file.
+
+### Post-Implementation (Mandatory Sequence)
+
+After completing the feature, run these steps **in order**:
+
+1. **Build** — verify no TypeScript or compilation errors:
+   ```
+   bun run build
+   ```
+2. **Test** — ensure all tests pass:
+   ```
+   bun test
+   ```
+3. **Commit** — once build and tests are green, commit with a conventional message:
+   ```
+   git commit -m "feat: <concise description of what was added/changed>"
+   ```
+   Follow conventional commits: `feat:`, `fix:`, `refactor:`, `test:`, `docs:`, `chore:`
+
+### Critical Restrictions
+
+- ❌ **NEVER** run `git push` — do not push to remote under any circumstances.
+- ❌ **NEVER** merge branches or perform any git operations beyond creating branches and committing locally.
+- ❌ **NEVER** commit with failing tests or a broken build.
+
+---
+
+## Project Overview
+This is a production-grade REST API boilerplate built with Clean (Hexagonal) Architecture and contract-driven development principles using Bun, Hono, PostgreSQL, and Drizzle ORM.
+
+## Tech Stack
+- **Runtime:** Bun
+- **Framework:** Hono + @hono/zod-openapi
+- **Database:** PostgreSQL + Drizzle ORM
+- **Validation:** Zod (schema-first, drives OpenAPI contract)
+- **Auth:** JWT access + refresh tokens with rotation
+- **DI:** Awilix (CLASSIC injection mode)
+- **Tests:** Bun test runner
+
+## Architecture Rules
+
+### 1. Clean/Hexagonal Architecture Layers
+**Strict Dependency Rule:** Core layer never imports from infrastructure layer.
+
+Layers (from innermost to outermost):
+- **Core/Domain Layer:** Pure business logic, entities, interfaces, use cases
+  - `src/server/core/entities/` - Domain entities
+  - `src/server/core/repositories/` - Repository interfaces (ports)
+  - `src/server/core/use-cases/` - Application use cases
+  - `src/server/core/services/` - Domain service interfaces
+  - `src/server/core/errors.ts` - Domain error types and ErrorCode map
+  - `src/server/core/shared/` - Shared domain utilities (e.g. pagination)
+
+- **Infrastructure Layer:** Technical implementation details
+  - `src/server/infrastructure/persistence/` - Database implementations (adapters)
+  - `src/server/infrastructure/http/` - Routes, middleware, response handling
+  - `src/server/infrastructure/email/` - Email service implementations
+  - `src/server/infrastructure/logger/` - Logging implementations
+  - `src/server/infrastructure/di/` - Dependency injection container
+  - `src/server/infrastructure/redis/` - Redis implementations
+  - `src/server/infrastructure/db/` - Database connection setup
+  - `src/server/infrastructure/services/` - Infrastructure service implementations
+
+- **Composition Root:** Wiring everything together
+  - `src/server/index.ts` - Application entrypoint
+  - `src/server/infrastructure/di/container.ts` - DI container configuration
+
+### 2. Dependency Flow Rules
+- ❌ Core → Infrastructure: FORBIDDEN (violates hexagonal architecture)
+- ✅ Infrastructure → Core: ALLOWED (adapters implement core interfaces)
+- ✅ Core → Core: ALLOWED (within same layer)
+- ✅ Infrastructure → Infrastructure: ALLOWED (within same layer)
+- ✅ Infrastructure → Core: ONLY through interface implementations
+
+### 3. Naming Conventions
+- **Interfaces:** Prefix with `I` (e.g., `IUserRepository`, `IEmailService`)
+- **Implementations:** Prefix with technology (e.g., `PostgresUserRepository`, `ResendEmailService`)
+- **Entities:** Domain objects in core with `Entity` suffix (e.g., `UserEntity`)
+- **Use Cases:** One file per use case with `UseCase` suffix (e.g., `RegisterUseCase`)
+- **Repositories:** Interface defines contract, implementation handles persistence
+- **DTOs:** Use Zod schemas for data transfer objects
+- **Error Codes:** Use `ErrorCode` const map **always** — never raw strings, anywhere in the codebase including infrastructure middleware
+
+### 4. Use Case Pattern
+- Each use case is a single, focused class with an `execute()` method
+- Dependencies injected via constructor using **interfaces only** — never concrete types
+- Contains pure business logic, no infrastructure concerns
+- Returns domain entities or primitive values (never infrastructure types)
+- Handles validation and business rules
+- Orchestrates repository calls but doesn't implement persistence logic
+
+### 5. Repository Pattern
+- Interfaces in `core/repositories/` define the contract
+- Implementations in `infrastructure/persistence/` handle specific technologies
+- Methods return domain entities, never database-specific types
+- Include standard CRUD operations plus domain-specific queries
+- Never leak ORM/database details into core layer
+
+### 6. Entity Rules
+- Entities are pure domain objects with no behavior (anemic domain model acceptable here)
+- Contain only properties and constructors
+- No persistence concerns (no `save()`, `delete()` methods)
+- Identity and equality based on ID properties
+- Never contain infrastructure-specific annotations or imports
+
+### 7. Validation & Contracts
+- **Zod schemas** are the single source of truth for:
+  - Request validation
+  - Response validation
+  - OpenAPI specification generation
+- Schemas located alongside routes in `infrastructure/http/{domain}/`
+- Naming: `{action}Schema` (e.g., `registerSchema`, `loginSchema`)
+- Use `.openapi()` to provide OpenAPI documentation
+- Reuse schemas where possible (e.g., `userResponseSchema`)
+- **Response schemas must match what use cases actually return** — if a use case returns `roles` in a user object, the response schema must declare `roles`
+
+### 8. HTTP Layer Structure
+- **Routes:** Defined in `infrastructure/http/{domain}/{domain}.routes.ts`
+- **Schemas:** Defined in `infrastructure/http/{domain}/{domain}.schemas.ts`
+- **Controllers:** Not used — route handlers call use cases directly
+- **Middleware:** Cross-cutting concerns in `infrastructure/http/middleware/`
+- **Response Handling:** Consistent envelope via `src/server/infrastructure/http/response/`
+- **Router Factory:** `createAppRouter()` in `infrastructure/http/shared/create-router.ts` — handles `defaultHook` for validation errors
+
+### 9. Dependency Injection
+- **Container:** Awilix with CLASSIC injection mode
+- **Registration:** All dependencies registered in `infrastructure/di/container.ts`
+- **Types:** Strongly typed `Cradle` in `infrastructure/di/types.ts`
+- **Cradle interface MUST use interface types** for all repositories and services — not concrete implementations:
+  - ✅ `userRepository: IUserRepository`
+  - ❌ `userRepository: PostgresUserRepository`
+  - This enforces the hexagonal boundary at the type level and allows adapters to be swapped
+- **Resolution:** Use `container.cradle` in middleware and route handlers
+- **Singletons:** Most services registered as singletons
+- **Factories:** Use `asClass()` for classes, `asValue()` for instances
+
+### 10. Error Handling
+- **Domain Errors:** `AppError` class with `ErrorCode` const map in `src/server/core/errors.ts`
+- **ErrorCode is the only valid source** of error codes — never use raw strings anywhere, including in HTTP middleware (rate limiters, etc.)
+- **Centralized Handling:** `errorHandler` middleware converts to HTTP responses
+- **Error Format:** Consistent `{ success: false, error: { code, message, details? } }`
+- **Status Codes:** Appropriate HTTP status per error type
+- **Logging:** All errors logged with context (`requestId`, method, path)
+- **Validation Errors:** Zod errors automatically handled by route `defaultHook` in `createAppRouter()`
+
+### 11. Authentication & Authorization
+- **JWT:** Access token (short-lived) + refresh token (long-lived) with rotation
+- **Token Storage:** Refresh tokens in database, JTI blacklist in Redis for logout
+- **`authMiddleware`** validates JWT and **must set ALL of the following context variables:**
+  - `userId` (from `sub`)
+  - `email` (from JWT payload)
+  - `roles` (from JWT payload, default `[]`)
+  - `jti`
+  - `exp`
+- **`loadPermissions` middleware** must be applied **after** `authMiddleware` on any route that uses `requirePermission()`. It reads `roles` from context and loads the corresponding permissions from the database.
+- **Middleware chain order:** `authMiddleware` → `loadPermissions` → `requireRole / requirePermission`
+- **`AppContext` typing:** All auth-dependent context variables (`userId`, `email`, `roles`, `permissions`, `jti`, `exp`) **must be typed as optional** (`?`) since public routes never run `authMiddleware`
+- **Authorization helpers:**
+  - `requireRole(...roles)` — checks roles set by `authMiddleware`
+  - `requirePermission(...permissions)` — checks permissions set by `loadPermissions`; do not use without `loadPermissions` in the chain
+  - `requireOwnership(fn)` — checks user owns the resource; `fn` must be typed as `(c: Context<AppContext>) => string`, never `any`
+- **Protection:** All routes default to public; explicitly apply `authMiddleware` to protected routes
+
+### 12. Testing Strategy
+- **Unit Tests:** Pure business logic with in-memory repository mocks
+  - Location: `tests/unit/`
+  - Mocks: Located in `tests/mocks/` (in-memory implementations of core interfaces)
+  - No database or external service dependencies
+  - **Every use case must have unit test coverage**
+- **Integration Tests:** Full HTTP request/response flow
+  - Location: `tests/integration/`
+  - Uses in-memory repositories for isolation
+  - Tests actual route handlers and middleware
+  - **Every route group must have integration test coverage**
+- **Test Framework:** Bun test runner with `describe` / `it` syntax
+- **Assertions:** `expect` library
+- **Setup:** `beforeEach` / `beforeAll` for test fixture preparation
+- **Router factory:** Integration tests must instantiate routers with all required use case arguments — missing args are a TypeScript error
+
+### 13. Database & Migrations
+- **ORM:** Drizzle ORM with PostgreSQL driver
+- **Schema Location:** `src/server/infrastructure/persistence/schema/`
+- **Migrations:** Drizzle Kit manages SQL migrations in `/drizzle/`
+- **Commands:**
+  - `bun db:generate` - Generate new migrations
+  - `bun db:migrate` - Apply migrations
+  - `bun db:studio` - Launch Drizzle Studio GUI
+- **Patterns:**
+  - Repositories use Drizzle query builder
+  - Entities mapped to database rows manually (no auto-mapping)
+  - Transactions handled per use case when needed
+  - Indexes defined in schema for performance
+
+### 14. External Services
+- **Email:** Resend service abstraction via `IEmailService` interface in `core/services/`
+- **Rate Limiting (domain-level):** `IRateLimiterService` interface in `core/services/` — in-memory implementation available, Redis-backed implementation is pending
+- **Rate Limiting (HTTP-level):** `rateLimiter` middleware factory with its own in-memory store — used for per-IP request limiting
+- **Token Blacklist:** `RedisTokenBlacklistService` — Redis-backed
+- **Configuration:** Environment variables validated via Zod schema in `src/server/config/env.ts`
+- **Seeding:** Initial data via `scripts/seed.ts` (roles, permissions)
+- **Spec Export:** OpenAPI spec generation via `scripts/export-spec.ts`
+
+### 15. Coding Standards
+- **TypeScript:** Strict mode enabled — no `any`, no implicit types
+- **No `any` types:** Use proper types everywhere. In middleware, use `Context<AppContext>` instead of `any` for context parameters
+- **Formatting:** Prefer explicit types over inference for API boundaries
+- **Imports:**
+  - Relative paths for local imports
+  - Group: external, internal, relative
+  - Alphabetical within groups
+  - Remove all unused imports — dead imports are not acceptable in production code
+- **Error Handling:**
+  - Always handle promises (`await` or `.catch()`)
+  - Never ignore errors (log at minimum)
+  - Use `AppError` + `ErrorCode` for domain errors; let infrastructure errors bubble to `errorHandler`
+- **Async/Await:** Use consistently, avoid `.then()` chains
+- **Constants:** UPPER_SNAKE_CASE for true constants
+- **Functions:**
+  - Arrow functions for callbacks
+  - Named functions for complex logic
+  - Early returns to reduce nesting
+- **Comments:**
+  - Explain why, not what
+  - JSDoc for public APIs
+  - TODO/FIXME/NOTE comments as needed
+
+### 16. Security Practices
+- **Passwords:** Bcrypt with salt rounds >= 12
+- **Secrets:** Never hardcoded, always from environment variables
+- **Headers:** Security middleware (CORS, rate limiting, etc.)
+- **Validation:** Input validation at API boundary (Zod schemas)
+- **Output Encoding:** Automatic via Hono JSON responses
+- **Tokens:** Short expiration, rotation, blacklisting on logout
+- **Environment:** Different configs for dev/test/prod via `NODE_ENV`
+
+### 17. API Design Principles
+- **RESTful:** Resource-oriented endpoints with standard HTTP verbs
+- **Versioning:** URL versioning (`/api/v1/`)
+- **Consistency:** Uniform response envelopes across all endpoints
+- **Documentation:** Auto-generated OpenAPI/Swagger from Zod schemas
+- **Status Codes:** Proper use of HTTP status codes
+- **Idempotency:** POST for creation, PUT/PATCH for updates, DELETE for removal
+- **Filtering/Sorting:** Query parameters for collections (when implemented)
+- **Pagination:** Limit/offset via shared `paginationQuerySchema` and `paginate()` helper — do not implement custom pagination per route
+- **HATEOAS:** Not implemented (JSON API preferred over hypermedia)
+
+### 18. Development Workflow
+- **Environment:** `.env` file (gitignored), `.env.example` template
+- **Database:** Docker Compose for local development (Postgres + Redis)
+- **Seeding:** Run `bun db:seed` after migrations for initial data
+- **Testing:** Run `bun test` frequently, `bun test --watch` during development
+- **Linting:** No formal linter — rely on TypeScript strictness and code review
+- **Debugging:** Bun inspector available; request IDs (`X-Request-Id`) for tracing
+- **Documentation:** Keep README and `project-context.md` updated
+- **Commits:** Conventional commit messages (`feat:`, `fix:`, `docs:`, `refactor:`, `test:`, etc.)
+
+### 19. File Organization Principles
+- **Group by feature/domain**, not by technical type when domains are large
+- **Keep related files together** (e.g., auth routes, schemas, use cases near each other)
+- **Max depth:** 4 layers (e.g., `src/server/core/use-cases/auth/`)
+- **Single responsibility:** One concept per file
+- **Barrel exports:** Avoid unless necessary for public APIs
+- **Index files:** Use `index.ts` for re-exports when importing directories
+- **File naming:** kebab-case for routes and configs, PascalCase for classes, camelCase for instances
+
+### 20. Performance Considerations
+- **Database:**
+  - Indexes on queried columns
+  - Select only needed columns
+  - Avoid N+1 queries — use batch loading (e.g., `findRolesByUserIds` instead of per-user calls)
+  - Connection pooling handled by Postgres driver
+- **Caching:** Redis for token blacklist; consider for frequent reads
+- **Logging:** Structured logging (pino), appropriate levels (`debug` / `info` / `warn` / `error`)
+- **Compression:** Enable HTTP compression if needed
+- **Bundle Size:** Minimal dependencies, tree-shaking via ES modules
+- **Monitoring:** Health checks at `/api/v1/health`; consider metrics endpoints
+
+## Domain-Specific Guidelines
+
+### Authentication Domain
+- **Flow:** Register → Verify Email → Login → Access Protected Routes
+- **Tokens:**
+  - Access token: 15 minutes, JWT (contains `sub`, `email`, `roles`, `jti`)
+  - Refresh token: 7 days, JWT + database storage + Redis JTI blacklist
+- **Email:** Verification required before login, resend capability with rate limiting
+- **Password Reset:** Token-based flow with expiration
+- **Session:** Stateless JWT; server-side token revocation via blacklist
+
+### Authorization Domain (RBAC)
+- **Model:** Role-Based Access Control
+- **Entities:**
+  - User ←
+→ Role (many-to-many via `user_roles` join table)
+  - Role ←→ Permission (many-to-many via `role_permissions` join table)
+- **Hierarchy:** Flat roles (no role inheritance)
+- **Checking:**
+  - `authMiddleware` puts role names from JWT into context
+  - `loadPermissions` middleware (must be applied explicitly) fetches permission names for those roles
+  - `requireRole()` checks context roles
+  - `requirePermission()` checks context permissions — only valid after `loadPermissions` runs
+- **Admin:** Special role with full access
+
+### User Management
+- **Attributes:** `id`, `email`, `name`, `passwordHash`, `isVerified`, `createdAt`
+- **Uniqueness:** Email must be unique
+- **Verification:** Email verification required for authentication
+- **Soft Delete:** Not implemented (hard delete only)
+- **Update:** Email and password changes require verification flows
+
+## Project Maintenance
+
+### Adding New Features (Follow This Pattern)
+1. **Domain:**
+   - Create entity in `core/entities/`
+   - Create repository interface in `core/repositories/`
+   - Create use cases in `core/use-cases/{feature}/`
+   - Create domain service interfaces in `core/services/` if needed
+2. **Persistence:**
+   - Implement repository in `infrastructure/persistence/`
+   - Add/update Drizzle schema in `infrastructure/persistence/schema/`
+   - Generate migration: `bun db:generate`
+   - Apply migration: `bun db:migrate`
+3. **API:**
+   - Create schemas in `infrastructure/http/{feature}/{feature}.schemas.ts`
+   - Create routes in `infrastructure/http/{feature}/{feature}.routes.ts`
+   - Wire router into `src/server/index.ts`
+4. **DI:**
+   - Register all new classes in `container.ts` with `asClass().singleton()`
+   - Add interface-typed entries to `Cradle` in `types.ts`
+5. **Testing:**
+   - Unit tests for every new use case in `tests/unit/use-cases/{feature}/`
+   - Integration tests for every new route group in `tests/integration/{feature}/`
+   - Update seed data if needed
+
+### Refactoring Guidelines
+- **Preserve Contracts:** Don't change Zod schemas without versioning
+- **Backwards Compatibility:** Prefer additive changes
+- **Tests First:** Update/add tests before refactoring
+- **Incremental:** Small, verified changes
+- **Documentation:** Update `project-context.md` and comments as needed
+- **Dependencies:** Keep updated, check for breaking changes
+
+### When in Doubt
+1. Check existing similar implementations (auth domain is the reference)
+2. Follow the strict dependency rule — core never imports infrastructure
+3. Use dependency injection for all external collaborators
+4. Put business logic in use cases, not route handlers or entities
+5. Validate inputs at the API boundary with Zod; ensure response schemas match actual return shapes
+6. Handle errors with `AppError` + `ErrorCode` — never raw strings
+7. Write tests for every new use case and route group
+8. Keep functions small and focused
