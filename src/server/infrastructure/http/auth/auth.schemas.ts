@@ -1,3 +1,4 @@
+// @.rules
 import { z } from "@hono/zod-openapi";
 
 export const registerSchema = z
@@ -57,6 +58,7 @@ export const userResponseSchema = z
     id: z.string(),
     email: z.string(),
     name: z.string(),
+    roles: z.array(z.string()),
   })
   .openapi("UserResponse");
 

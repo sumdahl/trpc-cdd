@@ -1,12 +1,14 @@
+// @.rules
 import { OpenAPIHono } from "@hono/zod-openapi";
 import { authRouter } from "./infrastructure/http/auth";
 import { healthRouter } from "./infrastructure/http/health/health.routes";
 import { corsMiddleware } from "./infrastructure/http/middleware/cors";
+import { errorHandler } from "./infrastructure/http/middleware/error-handler";
+import { loadPermissions } from "./infrastructure/http/middleware/load-permissions.middleware";
 import { requestLogger } from "./infrastructure/http/middleware/logger";
 import { rateLimiter } from "./infrastructure/http/middleware/rate-limiter";
-import { errorHandler } from "./infrastructure/http/middleware/error-handler";
-import { ErrorCode } from "./core/errors";
 import { adminRouter } from "./infrastructure/http/admin";
+import { ErrorCode } from "./core/errors";
 
 export const app = new OpenAPIHono().basePath("/api/v1");
 
@@ -20,6 +22,9 @@ app.use(
   rateLimiter({ limit: 10, windowMs: 60_000, keyPrefix: "auth-routes" }),
 );
 app.use("*", requestLogger);
+// loadPermissions runs after authMiddleware sets roles on the context.
+// On public routes roles is undefined so it short-circuits and sets permissions to [].
+app.use("*", loadPermissions);
 
 app.notFound((c) =>
   c.json(

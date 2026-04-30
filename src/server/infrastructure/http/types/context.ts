@@ -1,3 +1,4 @@
+// @.rules
 import { Context } from "hono";
 
 export type AppContext = {
@@ -5,10 +6,10 @@ export type AppContext = {
     requestId: string;
     userId?: string;
     email?: string;
-    roles: string[];
-    permissions: string[];
-    jti: string;
-    exp: number;
+    roles?: string[];
+    permissions?: string[];
+    jti?: string;
+    exp?: number;
   };
 };
 
